@@ -11,4 +11,4 @@ User forum: https://groups.io/g/Analyzer-EU1KY
 Description in German: (with tutorials in English, Russian, Magyar) see
 http://www.wkiefer.de/x28/EU1KY_AA.htm
 
-Firmware for Region 1,2,3 see Archiv.
+Firmware for Region 1,2,3 see Firmware-Archiv.
