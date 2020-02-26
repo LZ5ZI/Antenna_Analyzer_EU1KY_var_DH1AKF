@@ -1,0 +1,644 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<EmBitz_layout_file>
+	<ActiveTarget name="Release" />
+	<File name="Src\analyzer\adc\stm32_ub_adc3_single.c" open="0" top="0" tabpos="10" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="644" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\adc\stm32_ub_adc3_single.h" open="0" top="0" tabpos="9" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="781" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\adc\stm32_ub_system.c" open="0" top="0" tabpos="14" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="807" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\adc\stm32_ub_system.h" open="0" top="0" tabpos="15" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="500" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\config\config.c" open="1" top="0" tabpos="14" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="23522" topLine="85" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\config\config.h" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="235" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\dsp\dsp.c" open="0" top="0" tabpos="33" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="5836" topLine="188" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\dsp\dsp.h" open="0" top="0" tabpos="30" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="492" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\gen\adf4350.c" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="821" topLine="2" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\gen\adf4351.c" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="124" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\gen\gen.c" open="0" top="0" tabpos="40" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1977" topLine="57" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\gen\gen.h" open="0" top="0" tabpos="55" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="198" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\gen\rational.c" open="0" top="0" tabpos="46" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="689" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\gen\rational.h" open="0" top="0" tabpos="47" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="0" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\gen\si5338a.c" open="0" top="0" tabpos="43" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="0" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\gen\si5351.c" open="1" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="5626" topLine="156" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\gen\si5351.h" open="0" top="0" tabpos="14" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1018" topLine="4" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\lcd\bitmaps\bitmaps.c" open="0" top="0" tabpos="11" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="187" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\lcd\bitmaps\bitmaps.h" open="0" top="0" tabpos="27" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="383" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\lcd\consbig.c" open="0" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="0" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\lcd\font.c" open="0" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="4539" topLine="41" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\lcd\font.h" open="0" top="0" tabpos="59" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="379" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\lcd\fran.c" open="0" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1173" topLine="974" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\lcd\franbig.c" open="0" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="0" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\lcd\franbig.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="423" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\lcd\hit.c" open="1" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="182" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\lcd\hit.h" open="0" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="359" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\lcd\LCD.c" open="0" top="0" tabpos="10" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1370" topLine="24" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\lcd\LCD.h" open="0" top="0" tabpos="31" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2375" topLine="57" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\lcd\libnsbmp.c" open="0" top="0" tabpos="14" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="474" topLine="45" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\lcd\libnsbmp.h" open="0" top="0" tabpos="11" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1099" topLine="61" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\lcd\lodepng.c" open="0" top="0" tabpos="10" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1078" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\lcd\lodepng.h" open="0" top="0" tabpos="9" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="37772" topLine="556" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\lcd\sdigits.c" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="0" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\lcd\smith.c" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="5863" topLine="169" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\lcd\smith.h" open="0" top="0" tabpos="14" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1021" topLine="6" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\lcd\textbox.c" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="6555" topLine="106" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\lcd\textbox.h" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="491" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\lcd\touch.c" open="0" top="0" tabpos="20" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="462" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\lcd\touch.h" open="0" top="0" tabpos="18" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="307" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\osl\oslfile.c" open="1" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="5974" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\osl\oslfile.h" open="0" top="0" tabpos="24" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="888" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\rtc\DS3231.c" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="12" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\rtc\DS3231.h" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="730" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\rtc\STM32F7RTC.h" open="0" top="0" tabpos="16" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="0" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\uartcomm\aauart.c" open="0" top="0" tabpos="11" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="874" topLine="16" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\uartcomm\aauart.h" open="0" top="0" tabpos="65" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="0" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\window\BeepTimer.c" open="1" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="293" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\window\fftwnd.c" open="0" top="0" tabpos="29" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="10556" topLine="122" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\window\fftwnd.h" open="0" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="94" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\window\generator.c" open="0" top="0" tabpos="42" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="8656" topLine="287" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\window\generator.h" open="0" top="0" tabpos="41" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="268" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\window\keyboard.c" open="0" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="14539" topLine="170" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\window\keyboard.h" open="0" top="0" tabpos="22" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="657" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\window\mainwnd.c" open="1" top="0" tabpos="11" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="16479" topLine="571" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\window\mainwnd.h" open="1" top="0" tabpos="12" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="465" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\window\match.c" open="1" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="239" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\window\match.h" open="1" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="226" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\window\measurement.c" open="1" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2767" topLine="81" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\window\measurement.h" open="0" top="0" tabpos="21" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="274" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\window\num_keypad.c" open="0" top="0" tabpos="50" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1716" topLine="179" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\window\num_keypad.h" open="0" top="0" tabpos="48" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="314" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\window\oslcal.c" open="0" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="6839" topLine="166" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\window\panfreq.c" open="0" top="0" tabpos="67" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="17153" topLine="345" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\window\panfreq.h" open="0" top="0" tabpos="13" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="243" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\window\panvswr2.c" open="1" top="1" tabpos="9" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2007" topLine="58" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\window\panvswr2.h" open="1" top="0" tabpos="10" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="968" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\window\screenshot.c" open="0" top="0" tabpos="9" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="7719" topLine="260" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\window\screenshot.h" open="0" top="0" tabpos="56" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="226" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\window\spectr.c" open="0" top="0" tabpos="15" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1007" topLine="471" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\window\tdr.c" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="21462" topLine="527" />
+		</Cursor>
+	</File>
+	<File name="Src\BSP\Components\rk043fn48h\rk043fn48h.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2724" topLine="58" />
+		</Cursor>
+	</File>
+	<File name="Src\BSP\Components\wm8994\wm8994.c" open="0" top="0" tabpos="53" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="3011" topLine="75" />
+		</Cursor>
+	</File>
+	<File name="Src\BSP\Components\wm8994\wm8994.h" open="0" top="0" tabpos="17" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="4618" topLine="84" />
+		</Cursor>
+	</File>
+	<File name="Src\BSP\STM32746G-Discovery\custom_spi2.c" open="0" top="0" tabpos="34" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="802" topLine="61" />
+		</Cursor>
+	</File>
+	<File name="Src\BSP\STM32746G-Discovery\stm32746g_discovery.c" open="0" top="0" tabpos="45" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="21148" topLine="569" />
+		</Cursor>
+	</File>
+	<File name="Src\BSP\STM32746G-Discovery\stm32746g_discovery.h" open="0" top="0" tabpos="64" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="7856" topLine="200" />
+		</Cursor>
+	</File>
+	<File name="Src\BSP\STM32746G-Discovery\stm32746g_discovery_audio.c" open="0" top="0" tabpos="52" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="29659" topLine="803" />
+		</Cursor>
+	</File>
+	<File name="Src\BSP\STM32746G-Discovery\stm32746g_discovery_audio.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="10609" topLine="186" />
+		</Cursor>
+	</File>
+	<File name="Src\BSP\STM32746G-Discovery\stm32746g_discovery_lcd.c" open="0" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="6055" topLine="160" />
+		</Cursor>
+	</File>
+	<File name="Src\BSP\STM32746G-Discovery\stm32746g_discovery_lcd.h" open="0" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="5280" topLine="118" />
+		</Cursor>
+	</File>
+	<File name="Src\BSP\STM32746G-Discovery\stm32746g_discovery_ts.c" open="0" top="0" tabpos="35" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="7245" topLine="165" />
+		</Cursor>
+	</File>
+	<File name="Src\BSP\STM32746G-Discovery\stm32746g_discovery_ts.h" open="0" top="0" tabpos="36" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2174" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\CMSIS\Device\ST\STM32F7xx\Include\stm32f746xx.h" open="0" top="0" tabpos="21" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="15928" topLine="171" />
+		</Cursor>
+	</File>
+	<File name="Src\CMSIS\Device\ST\STM32F7xx\Include\stm32f7xx.h" open="0" top="0" tabpos="11" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="6641" topLine="137" />
+		</Cursor>
+	</File>
+	<File name="Src\CMSIS\DSP_Lib\Source\CommonTables\arm_const_structs.c" open="0" top="0" tabpos="21" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="264" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\CMSIS\DSP_Lib\Source\TransformFunctions\arm_cfft_f32.c" open="0" top="0" tabpos="43" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="0" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\CMSIS\Include\arm_math.h" open="0" top="0" tabpos="45" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="79386" topLine="1430" />
+		</Cursor>
+	</File>
+	<File name="Src\CMSIS\Include\core_cm7.h" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="115048" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\fatfs\diskio.c" open="0" top="0" tabpos="63" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2545" topLine="25" />
+		</Cursor>
+	</File>
+	<File name="Src\fatfs\diskio.h" open="0" top="0" tabpos="62" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="537" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\fatfs\drivers\sd_diskio.c" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="0" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\fatfs\ff.c" open="0" top="0" tabpos="16" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="116837" topLine="2916" />
+		</Cursor>
+	</File>
+	<File name="Src\fatfs\ff.h" open="0" top="0" tabpos="37" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="4839" topLine="324" />
+		</Cursor>
+	</File>
+	<File name="Src\fatfs\ff_gen_drv.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1249" topLine="37" />
+		</Cursor>
+	</File>
+	<File name="Src\fatfs\ffconf.h" open="0" top="0" tabpos="38" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="10061" topLine="227" />
+		</Cursor>
+	</File>
+	<File name="Src\fatfs\option\syscall.c" open="0" top="0" tabpos="24" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="0" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\Inc\crash.h" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="176" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\Inc\FreqCounter.h" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="396" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\Inc\main.h" open="0" top="0" tabpos="27" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2666" topLine="5" />
+		</Cursor>
+	</File>
+	<File name="Src\Inc\stm32f7xx_hal_conf.h" open="0" top="0" tabpos="18" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="11828" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\main.c" open="1" top="0" tabpos="13" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2185" topLine="85" />
+		</Cursor>
+	</File>
+	<File name="Src\STM32F7xx_HAL_Driver\Inc\Legacy\stm32_hal_legacy.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="64060" topLine="1480" />
+		</Cursor>
+	</File>
+	<File name="Src\STM32F7xx_HAL_Driver\Inc\stm32f7xx_hal.h" open="0" top="0" tabpos="19" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2433" topLine="25" />
+		</Cursor>
+	</File>
+	<File name="Src\STM32F7xx_HAL_Driver\Inc\stm32f7xx_hal_adc.h" open="0" top="0" tabpos="23" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="23303" topLine="330" />
+		</Cursor>
+	</File>
+	<File name="Src\STM32F7xx_HAL_Driver\Inc\stm32f7xx_hal_can.h" open="0" top="0" tabpos="36" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="4361" topLine="76" />
+		</Cursor>
+	</File>
+	<File name="Src\STM32F7xx_HAL_Driver\Inc\stm32f7xx_hal_def.h" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2648" topLine="32" />
+		</Cursor>
+	</File>
+	<File name="Src\STM32F7xx_HAL_Driver\Inc\stm32f7xx_hal_dma.h" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="8349" topLine="141" />
+		</Cursor>
+	</File>
+	<File name="Src\STM32F7xx_HAL_Driver\Inc\stm32f7xx_hal_gpio.h" open="0" top="0" tabpos="24" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="10685" topLine="192" />
+		</Cursor>
+	</File>
+	<File name="Src\STM32F7xx_HAL_Driver\Inc\stm32f7xx_hal_gpio_ex.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="4077" topLine="69" />
+		</Cursor>
+	</File>
+	<File name="Src\STM32F7xx_HAL_Driver\Inc\stm32f7xx_hal_i2c.h" open="0" top="0" tabpos="44" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="23768" topLine="527" />
+		</Cursor>
+	</File>
+	<File name="Src\STM32F7xx_HAL_Driver\Inc\stm32f7xx_hal_ltdc.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="8710" topLine="132" />
+		</Cursor>
+	</File>
+	<File name="Src\STM32F7xx_HAL_Driver\Inc\stm32f7xx_hal_rcc_ex.h" open="0" top="0" tabpos="15" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="190232" topLine="2928" />
+		</Cursor>
+	</File>
+	<File name="Src\STM32F7xx_HAL_Driver\Inc\stm32f7xx_hal_rtc.h" open="0" top="0" tabpos="16" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="9889" topLine="756" />
+		</Cursor>
+	</File>
+	<File name="Src\STM32F7xx_HAL_Driver\Inc\stm32f7xx_hal_sai.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="27714" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="Src\STM32F7xx_HAL_Driver\Inc\stm32f7xx_hal_tim.h" open="0" top="0" tabpos="13" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="15057" topLine="277" />
+		</Cursor>
+	</File>
+	<File name="Src\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal.c" open="0" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="11976" topLine="274" />
+		</Cursor>
+	</File>
+	<File name="Src\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_adc.c" open="0" top="0" tabpos="22" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="10754" topLine="185" />
+		</Cursor>
+	</File>
+	<File name="Src\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_i2c.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="64775" topLine="1637" />
+		</Cursor>
+	</File>
+	<File name="Src\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_pwr.c" open="0" top="0" tabpos="39" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="14777" topLine="350" />
+		</Cursor>
+	</File>
+	<File name="Src\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_pwr_ex.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="387" topLine="372" />
+		</Cursor>
+	</File>
+	<File name="Src\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_rtc.c" open="0" top="0" tabpos="19" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="7518" topLine="128" />
+		</Cursor>
+	</File>
+	<File name="Src\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_rtc_ex.c" open="0" top="0" tabpos="17" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2655" topLine="30" />
+		</Cursor>
+	</File>
+	<File name="Src\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_sai.c" open="0" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="29015" topLine="747" />
+		</Cursor>
+	</File>
+	<File name="Src\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_tim.c" open="0" top="0" tabpos="12" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="92044" topLine="2794" />
+		</Cursor>
+	</File>
+	<File name="Src\Sys\sdram_heap.c" open="0" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="3549" topLine="87" />
+		</Cursor>
+	</File>
+	<File name="Src\Sys\startup_stm32f746xx.s" open="0" top="0" tabpos="18" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="19970" topLine="455" />
+		</Cursor>
+	</File>
+	<File name="Src\Sys\stm32f7xx_it.c" open="0" top="0" tabpos="27" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="4583" topLine="134" />
+		</Cursor>
+	</File>
+</EmBitz_layout_file>
