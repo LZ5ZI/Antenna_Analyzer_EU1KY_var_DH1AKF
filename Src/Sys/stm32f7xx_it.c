@@ -41,6 +41,7 @@
 #include "main.h"
 #include "stm32f7xx_it.h"
 #include "aauart.h"
+#include "stm32f7xx_ll_exti.h"
 
 /** @addtogroup STM32F7xx_HAL_Examples
   * @{
@@ -141,18 +142,11 @@ void PendSV_Handler(void)
   * @param  None
   * @retval None
   */
-extern volatile uint32_t secondsCounter;
-static uint32_t millis;
-
 void SysTick_Handler(void)
 {
     extern volatile uint32_t main_sleep_timer;
     extern volatile uint32_t autosleep_timer;
     HAL_IncTick();
-    if(++millis>=1000){
-        millis=0;
-        secondsCounter++;
-    }
     if (0 != main_sleep_timer)
     {
         if (--main_sleep_timer == 0)
@@ -165,6 +159,23 @@ void SysTick_Handler(void)
         autosleep_timer--;
     }
 }
+
+/**
+  * @brief  This function handles external lines 15 to 10 interrupt request.
+  * @param  None
+  * @retval None
+  */
+void EXTI15_10_IRQHandler(void)  // Touch screen IRQ request
+{ uint8_t in;
+    extern volatile uint32_t main_sleep_timer;
+    //in = BSP_TS_ITGetStatus();
+    //BSP_TS_ITClear();
+    LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_13);
+    main_sleep_timer=0;
+    HAL_PWR_DisableSleepOnExit(); //Leave the CPU running after exit from interrupt
+    // while(TOUCH_IsPressed());
+}
+
 
 /******************************************************************************/
 /*                 STM32F7xx Peripherals Interrupt Handlers                   */
@@ -225,6 +236,13 @@ void USART6_IRQHandler(void)
 {
     AAUART_IRQHandler();
 }
+
+/******************************************************************************/
+/*                 STM32F7xx Peripherals Interrupt Handlers                   */
+/*  Add here the Interrupt Handler for the used peripheral(s) (PPP), for the  */
+/*  available peripheral interrupt handler's name please refer to the startup */
+/*  file (startup_stm32f7xx.s).                                               */
+/******************************************************************************/
 
 /**
   * @}

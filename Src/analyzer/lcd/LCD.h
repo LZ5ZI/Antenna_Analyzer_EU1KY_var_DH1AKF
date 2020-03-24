@@ -46,6 +46,11 @@ enum
     LCD_WHITE = LCD_RGB(255, 255, 255)
 };
 
+void LCD_ResetLayer(void);
+void LCD_SetLayer_0(void);
+void LCD_SetLayer_1(void);
+
+
 ///Initialize hardware, turn on and fill display with black
 void LCD_Init(void);
 

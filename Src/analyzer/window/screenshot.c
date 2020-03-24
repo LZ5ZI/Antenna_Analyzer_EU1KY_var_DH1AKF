@@ -137,7 +137,7 @@ uint8_t* OutBuf=0;
             f_close(&fo);
             if(result1==0){
                PixPict((480-w)/2,(272-h)/2,&OutBuf[0]);
-               lodepng_free((void*) &OutBuf);
+               lodepng_free(OutBuf);
             }
             else {
                 return -1;
@@ -317,7 +317,7 @@ char text[24], second1;
 uint32_t mon;
 short AMPM1;
 
-    LCD_FillRect((LCDPoint){50,248}, (LCDPoint){479,271}, BackGrColor);
+    LCD_FillRect((LCDPoint){70,248}, (LCDPoint){479,271}, BackGrColor);
     if(NoDate==1) return;
     if(RTCpresent==1){
         getTime(&time, &second1,&AMPM1,0);

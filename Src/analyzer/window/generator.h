@@ -10,6 +10,5 @@
 
 void GENERATOR_Window_Proc(void);
 static void ShowF(void);
-int testGen(void);
 
 #endif

@@ -2,7 +2,6 @@
 #include "LCD.h"
 #include "touch.h"
 #include "config.h"
-#include "BeepTimer.h"
 
 //TODO: make it more portable
 #define IS_IN_RAM(ptr) ((uint32_t)ptr >= 0x20000000)
@@ -88,30 +87,16 @@ void TEXTBOX_SetText(TEXTBOX_CTX_t *ctx, uint32_t idx, const char* txt)
 {
     if (0 == ctx || 0 == txt)
         return;
-TEXTBOX_t *tb = TEXTBOX_Find(ctx, idx);
+    TEXTBOX_t *tb = TEXTBOX_Find(ctx, idx);
+    if (0 == tb || !IS_IN_RAM(tb))
+        return;
     if (TEXTBOX_TYPE_TEXT != tb->type)
         return;
     TEXTBOX_Clear(ctx, idx);
     tb->text = txt;
-    if(IS_IN_RAM(tb)){
-        tb->width = FONT_GetStrPixelWidth(tb->font, tb->text);
-        tb->height = FONT_GetHeight(tb->font);
-        FONT_Write(tb->font, tb->fgcolor, tb->bgcolor, tb->x0, tb->y0, tb->text);
-    }
-    else{
-        int x,y;
-        if (tb->center){
-            int h = FONT_GetHeight(tb->font);
-            y = (int)tb->y0 + (int)tb->height / 2  - h / 2;
-            int w = FONT_GetStrPixelWidth(tb->font, tb->text);
-            x = (int)tb->x0 + (int)tb->width / 2  - w / 2;
-        }
-        else {
-            x=(int)tb->x0;
-            y=(int)tb->y0;
-        }
-        FONT_Write(tb->font, tb->fgcolor, tb->bgcolor, x, y, tb->text);
-    }
+    tb->width = FONT_GetStrPixelWidth(tb->font, tb->text);
+    tb->height = FONT_GetHeight(tb->font);
+    FONT_Write(tb->font, tb->fgcolor, tb->bgcolor, tb->x0, tb->y0, tb->text);
     if (tb->border)
     {
         LCD_Rectangle(LCD_MakePoint(tb->x0, tb->y0),
@@ -119,7 +104,7 @@ TEXTBOX_t *tb = TEXTBOX_Find(ctx, idx);
                       tb->fgcolor);
     }
 }
-
+/*
 void TEXTBOX_DrawContext(TEXTBOX_CTX_t *ctx)
 {
     TEXTBOX_t* pbox = ctx->start;
@@ -171,6 +156,101 @@ void TEXTBOX_DrawContext(TEXTBOX_CTX_t *ctx)
         pbox = pbox->next;
     }
 }
+*/
+
+void TEXTBOX_DrawContext(TEXTBOX_CTX_t *ctx)
+{
+    TEXTBOX_t* pbox = ctx->start;
+    LCD_Layer_OFF();
+    while (pbox)
+    {
+        if (TEXTBOX_TYPE_TEXT == pbox->type)
+        {
+
+            int w = pbox->width;
+            int h = pbox->height;
+
+            // Calculate width and height if not given
+            if (0 == w)
+            {
+                w = FONT_GetStrPixelWidth(pbox->font, pbox->text);
+                h = FONT_GetHeight(pbox->font);
+
+                if (IS_IN_RAM(pbox))
+                {
+                    pbox->width = w;
+                    pbox->height = h;
+                }
+            }
+
+            // Calculate our corners
+            int x0 = pbox->x0;
+            int y0 = pbox->y0;
+            int x1 = x0 + w;
+            int y1 = y0 + h;
+
+            // Draw the box in the appropriate border style
+            if (pbox->border == TEXTBOX_BORDER_NONE ||
+                pbox->border == TEXTBOX_BORDER_SOLID)
+            {
+                LCD_FillRect(LCD_MakePoint(x0, y0), LCD_MakePoint(x1, y1), pbox->bgcolor);
+
+                if (pbox->border == TEXTBOX_BORDER_SOLID)
+                {
+                    LCD_Rectangle(LCD_MakePoint(x0, y0), LCD_MakePoint(x1, y1),
+                                  pbox->fgcolor);
+                }
+            }
+            else if (pbox->border == TEXTBOX_BORDER_BUTTON)
+            {
+                LCDPoint outline[9];
+                int r = h <= 20 ? 2 : 3; // Rounded corner radius
+
+                outline[0] = LCD_MakePoint(x0 + r, y1);
+                outline[1] = LCD_MakePoint(x0, y1 - r);
+                outline[2] = LCD_MakePoint(x0, y0 + r);
+                outline[3] = LCD_MakePoint(x0 + r, y0);
+                outline[4] = LCD_MakePoint(x1 - r, y0);
+                outline[5] = LCD_MakePoint(x1, y0 + r);
+                outline[6] = LCD_MakePoint(x1, y1 - r);
+                outline[7] = LCD_MakePoint(x1 - r, y1);
+                outline[8] = LCD_MakePoint(x0 + r, y1);
+
+                LCD_FillPolygon(outline, 9, pbox->bgcolor);
+                //LCD_PolyLine(outline, 6, LCD_TintColor(pbox->bgcolor, 1.5));
+                //LCD_PolyLine(outline + 5, 4, LCD_TintColor(pbox->bgcolor, 0.6));
+                LCD_PolyLine(outline, 6, LCD_WHITE);
+                LCD_PolyLine(outline + 5, 4, LCD_YELLOW);
+            }
+
+            // Draw the text
+            if (pbox->center && pbox->width && pbox->height)
+            {
+                h = FONT_GetHeight(pbox->font);
+                w = FONT_GetStrPixelWidth(pbox->font, pbox->text);
+                x0 += (int)pbox->width / 2 - w / 2;
+                y0 += (int)pbox->height / 2 - h / 2;
+            }
+            FONT_Write(pbox->font, pbox->fgcolor, 0, x0, y0, pbox->text);
+        }
+        else if (TEXTBOX_TYPE_BMP == pbox->type)
+        {
+            LCD_DrawBitmap(LCD_MakePoint(pbox->x0, pbox->y0), pbox->bmp, pbox->bmpsize);
+            if (pbox->border == TEXTBOX_BORDER_SOLID)
+            {
+                LCD_Rectangle(LCD_MakePoint(pbox->x0, pbox->y0),
+                              LCD_MakePoint(pbox->x0 + pbox->width, pbox->y0 + pbox->height),
+                              pbox->fgcolor);
+            } //TODO else if (pbox->border == TEXTBOX_BORDER_BUTTON)
+        }
+        pbox = pbox->next;
+    }
+    //LCD_ChangeLayer();
+    LCD_Layer_ON();
+
+}
+
+
 
 uint32_t TEXTBOX_HitTest(TEXTBOX_CTX_t *ctx)
 {
@@ -196,7 +276,7 @@ uint32_t TEXTBOX_HitTest(TEXTBOX_CTX_t *ctx)
             if (coord.y >= pbox->y0 && coord.y < pbox->y0 + pbox->height)
             {
                 //Execute hit callback
-                if(BeepIsOn==1){
+                if(BeepOn1==1){
                     UB_TIMER2_Init_FRQ(880);
                     UB_TIMER2_Start();
                     Sleep(100);
@@ -216,7 +296,7 @@ uint32_t TEXTBOX_HitTest(TEXTBOX_CTX_t *ctx)
                     if(TEXTBOX_repeats<5){      //  WK
                         TEXTBOX_previous=pbox;
                         TEXTBOX_repeats++;
-                        Sleep(400);
+                        Sleep(200);
                         return 0;
                     }
                     if(pbox==TEXTBOX_previous){
@@ -228,16 +308,14 @@ uint32_t TEXTBOX_HitTest(TEXTBOX_CTX_t *ctx)
                 }
 
                 else {
-                    Sleep(400); // WK
+                    Sleep(100); // WK
                 }
-                if(pbox->type!=TEXTBOX_TYPE_HITRECT){
                 //Invert text colors while touch is pressed
-                    LCD_InvertRect(LCD_MakePoint(pbox->x0, pbox->y0), LCD_MakePoint(pbox->x0 + pbox->width, pbox->y0 + pbox->height));
+                //LCD_InvertRect(LCD_MakePoint(pbox->x0, pbox->y0), LCD_MakePoint(pbox->x0 + pbox->width, pbox->y0 + pbox->height));
                 //Wait for touch release
                // while (TOUCH_IsPressed());// WK
                 //Restore textbox colors
-                    LCD_InvertRect(LCD_MakePoint(pbox->x0, pbox->y0), LCD_MakePoint(pbox->x0 + pbox->width, pbox->y0 + pbox->height));
-                }
+                //LCD_InvertRect(LCD_MakePoint(pbox->x0, pbox->y0), LCD_MakePoint(pbox->x0 + pbox->width, pbox->y0 + pbox->height));
                 return 1;
             }
         }

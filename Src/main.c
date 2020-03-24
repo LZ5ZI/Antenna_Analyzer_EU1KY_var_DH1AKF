@@ -12,7 +12,6 @@
 #include "si5351.h"
 #include "dsp.h"
 #include "mainwnd.h"
-
 #include "aauart.h"
 #include "custom_spi2.h"
 #include "gen.h"
@@ -27,9 +26,6 @@
 #include "stm32746g_discovery.h"
 #include "stm32f7xx_hal_adc.h"
 
-
-extern int testGen(void);
-extern int BeepIsActive;
 static void SystemClock_Config(void);
 static void CPU_CACHE_Enable(void);
 static void MPU_Config(void);
@@ -37,9 +33,8 @@ extern uint32_t date, time;
 extern uint32_t RTCpresent;
 volatile uint32_t main_sleep_timer = 0;
 volatile uint32_t autosleep_timer = 0xFFFFFFFFul;
-volatile uint32_t secondsCounter;
-int Sleeping;
 
+volatile uint32_t secondsCounter;
 
 void Sleep(uint32_t nms)
 {
@@ -67,7 +62,6 @@ void Sleep(uint32_t nms)
     // leave device running when the main_sleep_timer downcount reaches zero,
     // until then the device remains in Sleep state with only interrupts running.
     main_sleep_timer = nms;
-    Sleeping=1;
     HAL_PWR_EnableSleepOnExit();
     HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
 }
@@ -86,21 +80,40 @@ static uint32_t date1, time1;
 static uint8_t second, second1;
 static short AMPM,AMPM1;
 
+static void Error_Handler(char err)
+{
+/* Turn LED1 on */
+    BSP_LED_On(LED1);
+    FONT_Print(FONT_FRAN, LCD_YELLOW, BackGrColor, 0, 200, "%d", err);// WK
+    while(1)
+{
+    BSP_LED_Toggle(LED1);
+    HAL_Delay(200);
+}
+}
+FATFS SDFatFs;  /* File system object for SD card logical drive */
+FIL MyFile;     /* File object */
+char SDPath[4]; /* SD card logical drive path */
+uint8_t workBuffer[_MAX_SS];
+
+
+
 int main(void)
 {
     MPU_Config();
-    CPU_CACHE_Enable();
     HAL_Init();
     SystemClock_Config();
+    CPU_CACHE_Enable();
     BSP_LED_Init(LED1);
     LCD_Init();
+
+    InitTimer2_4_5(); // WK
     ADC3_Init();   // WK
     SPI2_Init();
     Sleep(300);
     TOUCH_Init();
     setup_GPIO();
-    SWRTone=0;
-    BeepIsActive=0;
+    AUDIO1=0;
     //Mount SD card
     if (FATFS_LinkDriver(&SD_Driver, SDPath) != 0)
         CRASH("FATFS_LinkDriver failed");
@@ -115,16 +128,12 @@ int main(void)
     AAUART_Init(); //Initialize remote control protocol handler
 
     CAMERA_IO_Init();// I2C connection
-
     Sleep(50);
-    if(testGen()!=0)// wk 21.01.2019
-        CRASH("SI5351 failed");
-
     getTime(&time,&second,&AMPM,0);
     getDate(&date);
     if (ShowLogo()==-1)// no logo.bmp or logo.png file found:
         LCD_DrawBitmap(LCD_MakePoint(90, 24), logo_bmp, logo_bmp_size);// show original logo
-    Sleep (3000);
+    Sleep (500);
     autosleep_timer = CFG_GetParam(CFG_PARAM_LOWPWR_TIME);
     if (autosleep_timer != 0 && autosleep_timer < 10000)
     {
@@ -133,12 +142,12 @@ int main(void)
         autosleep_timer = 0;
     }
 
-    Sleep(1000);
+    Sleep(100);
     ColourSelection=CFG_GetParam(CFG_PARAM_Daylight);
     FatLines=true;
     if(0==CFG_GetParam(CFG_PARAM_Fatlines))
        FatLines=false;
-    BeepIsOn=CFG_GetParam(CFG_PARAM_BeepOn);
+    BeepOn1=CFG_GetParam(CFG_PARAM_BeepOn);
     getTime(&time1,&second1,&AMPM1,0);
     // second=second1;//      ************************** TEST without RTC
     getDate(&date1);
@@ -149,11 +158,8 @@ int main(void)
         time=CFG_GetParam(CFG_PARAM_Time);
     }
     else  RTCpresent=1;
-//  RTCpresent=false;//   ************************** TEST
+
     //Run main window function
-    Sleeping=0;
-    Sel1=Sel2=Sel3=0;
-    //RTCInit();// in the future: periodic wake up
     MainWnd(); //Never returns
 
     return 0;
@@ -260,45 +266,59 @@ void SystemClock_Config(void)
   */
 static void MPU_Config(void)
 {
-    MPU_Region_InitTypeDef MPU_InitStruct;
+	MPU_Region_InitTypeDef MPU_InitStruct;
+	/* Disable MPU */
+	HAL_MPU_Disable();
 
-    /* Disable the MPU */
-    HAL_MPU_Disable();
+//Configure the MPU Set up MPU region 0 as a 4GB background region with the above attributes.
+//For details visit:
+//https://developer.arm.com/docs/146793866/latest/\
 
-    /* Configure the MPU attributes as WT for SRAM */
+	// Configure RAM region as Region N°1, 8kB of size and R/W region
     MPU_InitStruct.Enable = MPU_REGION_ENABLE;
-    MPU_InitStruct.BaseAddress = 0x20010000;
-    MPU_InitStruct.Size = MPU_REGION_SIZE_256KB;
-    MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
-    MPU_InitStruct.IsBufferable = MPU_ACCESS_NOT_BUFFERABLE;
-    MPU_InitStruct.IsCacheable = MPU_ACCESS_CACHEABLE;
-    MPU_InitStruct.IsShareable = MPU_ACCESS_NOT_SHAREABLE;
-    MPU_InitStruct.Number = MPU_REGION_NUMBER0;
-    MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL0;
-    MPU_InitStruct.SubRegionDisable = 0x00;
-    MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE;
+	MPU_InitStruct.Number = MPU_REGION_NUMBER0;
+	MPU_InitStruct.BaseAddress = 0x20010000;
+	MPU_InitStruct.Size = MPU_REGION_SIZE_256KB;
+	MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
+	MPU_InitStruct.IsBufferable = MPU_ACCESS_NOT_BUFFERABLE;
+	MPU_InitStruct.IsCacheable = MPU_ACCESS_CACHEABLE;
+	MPU_InitStruct.IsShareable = MPU_ACCESS_SHAREABLE;
+	MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL0;
+	MPU_InitStruct.SubRegionDisable = 0x00;
+	MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE;
+	HAL_MPU_ConfigRegion(&MPU_InitStruct);
 
-    HAL_MPU_ConfigRegion(&MPU_InitStruct);
-
-    /* Configure the MPU attributes for SDRAM */
+	// Configure FLASH region as REGION N°1, 1MB of size and R/W region
     MPU_InitStruct.Enable = MPU_REGION_ENABLE;
-    MPU_InitStruct.BaseAddress = SDRAM_DEVICE_ADDR;
-    MPU_InitStruct.Size = MPU_REGION_SIZE_8MB;
-    MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
-    MPU_InitStruct.IsBufferable = MPU_ACCESS_NOT_BUFFERABLE;
-    MPU_InitStruct.IsCacheable = MPU_ACCESS_NOT_CACHEABLE;
-    MPU_InitStruct.IsShareable = MPU_ACCESS_SHAREABLE;
-    MPU_InitStruct.Number = MPU_REGION_NUMBER1;
-    MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL1;
-    MPU_InitStruct.SubRegionDisable = 0x00;
-    MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_DISABLE;
+	MPU_InitStruct.Number = MPU_REGION_NUMBER1;
+	MPU_InitStruct.BaseAddress = 0x08000000;
+	MPU_InitStruct.Size = MPU_REGION_SIZE_1MB;
+	MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
+	MPU_InitStruct.IsBufferable = MPU_ACCESS_NOT_BUFFERABLE;
+	MPU_InitStruct.IsCacheable = MPU_ACCESS_CACHEABLE;
+	MPU_InitStruct.IsShareable = MPU_ACCESS_NOT_SHAREABLE;
+	MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL0;
+	MPU_InitStruct.SubRegionDisable = 0x00;
+	MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE;
+	HAL_MPU_ConfigRegion(&MPU_InitStruct);
 
-    HAL_MPU_ConfigRegion(&MPU_InitStruct);
+	/* Configure SDRAM region as REGION N°2, 8MB of size, R/W region */
+	MPU_InitStruct.Enable = MPU_REGION_ENABLE;
+	MPU_InitStruct.Number = MPU_REGION_NUMBER2;
+	MPU_InitStruct.BaseAddress = 0xC0000000;
+	MPU_InitStruct.Size = MPU_REGION_SIZE_8MB;
+	MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
+	MPU_InitStruct.IsBufferable = MPU_ACCESS_NOT_BUFFERABLE;
+	MPU_InitStruct.IsCacheable = MPU_ACCESS_NOT_CACHEABLE;	            //
+	MPU_InitStruct.IsShareable = MPU_ACCESS_SHAREABLE;
+	MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL0;
+	MPU_InitStruct.SubRegionDisable = 0x00;
+	MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_DISABLE;
+	HAL_MPU_ConfigRegion(&MPU_InitStruct);
 
-    /* Enable the MPU */
-    HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
-}
-
+	/* Enable MPU */
+	HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
+  }
 
 //CPU L1-Cache enable.
 static void CPU_CACHE_Enable(void)

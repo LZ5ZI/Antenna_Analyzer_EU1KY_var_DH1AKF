@@ -18,9 +18,9 @@
 // (keine Nummer doppelt und von 0 beginnend)
 //--------------------------------------------------------------
 typedef enum {
-  //ADC_PA0 = 0,  // PA0
-  //ADC_PF9 = 1,  // PF9
-  ADC_PF8 = 0   // PF8
+  ADC_PA0 = 0,  // PA0
+  ADC_PF9 = 1,  // PF9
+  ADC_PF8 = 2   // PF8
 }ADC3s_NAME_t;
 
 

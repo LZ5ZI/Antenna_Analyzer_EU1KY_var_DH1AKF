@@ -78,7 +78,7 @@
     !defined (STM32F769xx) && !defined (STM32F777xx) && !defined (STM32F779xx)
   /* #define STM32F756xx */   /*!< STM32F756VG, STM32F756ZG, STM32F756ZG, STM32F756IG, STM32F756BG,
                                    STM32F756NG Devices */
-#define STM32F746xx    /*!< STM32F746VE, STM32F746VG, STM32F746ZE, STM32F746ZG, STM32F746IE, STM32F746IG,
+  /* #define STM32F746xx */   /*!< STM32F746VE, STM32F746VG, STM32F746ZE, STM32F746ZG, STM32F746IE, STM32F746IG,
                                    STM32F746BE, STM32F746BG, STM32F746NE, STM32F746NG Devices */
   /* #define STM32F745xx */   /*!< STM32F745VE, STM32F745VG, STM32F745ZG, STM32F745ZE, STM32F745IE, STM32F745IG Devices */
   /* #define STM32F765xx */   /*!< STM32F765BI, STM32F765BG, STM32F765NI, STM32F765NG, STM32F765II, STM32F765IG,
@@ -101,7 +101,7 @@
    In this case, these drivers will not be included and the application code will
    be based on direct access to peripherals registers
    */
-#define USE_HAL_DRIVER
+//  #define USE_HAL_DRIVER
 #endif /* USE_HAL_DRIVER */
 
 /**

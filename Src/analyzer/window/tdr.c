@@ -128,7 +128,7 @@ int i, fstep, maxCount;
     // Do IRFFT
     arm_rfft_fast_instance_f32 S;
     arm_rfft_fast_init_f32(&S, maxCount*2);
-    arm_rfft_fast_f32(&S, (float32_t*)freq_domain, time_domain, 1);// Inverse FFT
+    arm_rfft_fast_f32(&S, (float32_t*)freq_domain, time_domain, 1);
 
     //Time domain data is in rfft_input now
     //Normalize

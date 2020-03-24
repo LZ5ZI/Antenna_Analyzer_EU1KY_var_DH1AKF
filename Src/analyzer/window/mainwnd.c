@@ -35,7 +35,6 @@
 #include "spectr.h"
 #include "stm32_ub_adc3_single.h"
 #include "DS3231.h"
-#include "panvswr2.h"
 
 extern void Sleep(uint32_t);
 static void Exit1(void);
@@ -90,7 +89,7 @@ static void Colours(void);
 #define M_FGCOLOR LCD_RGB(255,255,0) //Menu item foreground color
 
 #define COL1 10  //Column 1 x coordinate
-#define COL2 230 //Column 2 x coordinate
+#define COL2 240 //Column 2 x coordinate
 
 static USBD_HandleTypeDef USBD_Device;
 extern char SDPath[4];
@@ -322,7 +321,7 @@ static void PROTOCOL_Handler(void)
             fint = _fCenter - _fSweep / 2;
         fstep = _fSweep / steps;
         steps += 1;
-        char txstr[64];
+        char txstr[100];
         while (steps--)
         {
             DSP_RX rx;
@@ -443,25 +442,37 @@ void Exit(void){
     InitVoltage();
 }
 
+static void Exit1(void){
+    rqExit1=true;
+    InitVoltage();
+}
+
+static int rqExit3;
+
+static void Exit3(void){
+    rqExit3=1;
+    InitVoltage();
+}
+
 static const TEXTBOX_t tb_reload[] = {
     (TEXTBOX_t){ .x0 = TBX0+200, .y0 = 10, .text = "Up", .font = FONT_FRANBIG, .width = Fieldw1, .height = FieldH, .center = 1,
-                 .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK, .cb = (void(*)(void))Prev, .cbparam = 1, .next = (void*)&tb_reload[1] },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK, .cb = (void(*)(void))Prev, .cbparam = 1, .next = (void*)&tb_reload[1] },
     (TEXTBOX_t){ .x0 = TBX0+200, .y0 = 10+FieldH+1, .text = "Down", .font = FONT_FRANBIG, .width = Fieldw1, .height = FieldH, .center = 1,
-                 .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK, .cb = (void(*)(void))Next, .cbparam = 1,  .next = (void*)&tb_reload[2] },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK, .cb = (void(*)(void))Next, .cbparam = 1,  .next = (void*)&tb_reload[2] },
     (TEXTBOX_t){ .x0 = TBX0+200, .y0 = 234, .text = "Delete", .font = FONT_FRANBIG, .width = Fieldw1, .height = FieldH, .center = 1,
-                 .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_RED, .cb = (void(*)(void))Delete, .cbparam = 1,  .next = (void*)&tb_reload[3] },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = LCD_WHITE, .bgcolor = LCD_RED, .cb = (void(*)(void))Delete, .cbparam = 1,  .next = (void*)&tb_reload[3] },
     (TEXTBOX_t){ .x0 = TBX0+200, .y0 = TBY+18, .text = "Show", .font = FONT_FRANBIG, .width = Fieldw1, .height = FieldH, .center = 1,
-                 .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_GREEN, .cb = (void(*)(void))ShowP, .cbparam = 1,  .next = (void*)&tb_reload[4] },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = LCD_WHITE, .bgcolor = LCD_GREEN, .cb = (void(*)(void))ShowP, .cbparam = 1,  .next = (void*)&tb_reload[4] },
     (TEXTBOX_t){ .x0 = 2, .y0 = 234, .text = " Exit ", .font = FONT_FRANBIG, .width = 100, .height = FieldH, .center = 1,
-                 .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK, .cb = (void(*)(void))Exit, .cbparam = 1, .next =(void*)&tb_reload[5] },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK, .cb = (void(*)(void))Exit, .cbparam = 1, .next =(void*)&tb_reload[5] },
     (TEXTBOX_t){ .x0 = 80, .y0 = 234, .text = " Next Page", .font = FONT_FRANBIG, .width = 150, .height = FieldH, .center = 1,
-                 .border = 1, .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK, .cb = (void(*)(void))NextPage, .cbparam = 1,},
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK, .cb = (void(*)(void))NextPage, .cbparam = 1,},
 
 };
 
 void Reload_Proc(void){// WK ***************************************************************************************
 TEXTBOX_CTX_t fctx;
-char str[16];
+char str[100];
 uint32_t idx;
 
     SetColours();
@@ -537,13 +548,13 @@ void MenuData_PC(void)// *******************************************************
     //Initialize textbox context
     TEXTBOX_InitContext(&fctx1);
     hbPict      = (TEXTBOX_t){.x0 = COL1, .y0 = 10, .text ="Manage Snapshots", .font = FONT_FRANBIG, .width = 240, .center = 1,
-                            .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = Reload_Proc };
+                            .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = Reload_Proc };
     TEXTBOX_Append(&fctx1, &hbPict);
     hbUSB       = (TEXTBOX_t){.x0 = COL1, .y0 = 60, .text ="USB HS Transfer", .font = FONT_FRANBIG, .width = 240, .center = 1,
-                            .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = USBD_Proc };
+                            .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = USBD_Proc };
     TEXTBOX_Append(&fctx1, &hbUSB);
     hbMain1     = (TEXTBOX_t){.x0 = COL1, .y0 = 210, .text =" Main Menu ", .font = FONT_FRANBIG, .width = 200, .center = 1,
-                            .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = LCD_RED, .cb = Exit1 };
+                            .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = LCD_RED, .cb = (void(*)(void))Exit1 };
     TEXTBOX_Append(&fctx1, &hbMain1);
     TEXTBOX_DrawContext(&fctx1);
     InitVoltage();
@@ -553,14 +564,14 @@ void MenuData_PC(void)// *******************************************************
         Sleep(0); //for autosleep to work
         if (TEXTBOX_HitTest(&fctx1))
         {
-            Sleep(50);
-            TEXTBOX_DrawContext(&fctx1);
             if (rqExit1)
             {
                 rqExit1=false;
                 while (TOUCH_IsPressed());
                 return;
             }
+            Sleep(50);
+            TEXTBOX_DrawContext(&fctx1);
             Sleep(50);
         }
 
@@ -578,22 +589,22 @@ void MEASUREMENT_Menu(void)// **************************************************
     TEXTBOX_InitContext(&main_ctx1);
 
     hbSingle = (TEXTBOX_t){.x0 = COL1, .y0 = 10, .text =    " Single Frequency ", .font = FONT_FRANBIG, .width = 200, .center = 1,
-                            .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = Single_Frequency_Proc };
+                            .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = Single_Frequency_Proc };
     TEXTBOX_Append(&main_ctx1, &hbSingle);
  //Panoramic scan window
     hbPan = (TEXTBOX_t){.x0 = COL1, .y0 = 60, .text =    " Frequency Sweep ", .font = FONT_FRANBIG, .width = 200, .center = 1,
-                            .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = PANVSWR2_Proc };
+                            .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = PANVSWR2_Proc };
     TEXTBOX_Append(&main_ctx1, &hbPan);
     //MultiScan  WK
     hbMulti = (TEXTBOX_t){.x0 = COL1, .y0 = 110, .text =   " Multi SWR ", .font = FONT_FRANBIG, .width = 200, .center = 1,
-                            .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = MultiSWR_Proc };
+                            .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = MultiSWR_Proc };
     TEXTBOX_Append(&main_ctx1, &hbMulti);
 
     hbTun = (TEXTBOX_t){.x0 = COL1, .y0 = 160, .text =" Tune SWR ", .font = FONT_FRANBIG, .width = 200, .center = 1,
-                            .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = Tune_SWR_Proc };
+                            .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = Tune_SWR_Proc };
     TEXTBOX_Append(&main_ctx1, &hbTun);
     hbMain = (TEXTBOX_t){.x0 = COL1, .y0 = 210, .text ="Main Menu", .font = FONT_FRANBIG, .width = 200, .center = 1,
-                            .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = LCD_RED, .cb = Exit1 };
+                            .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = LCD_RED, .cb = (void(*)(void))Exit1 };
     TEXTBOX_Append(&main_ctx1, &hbMain);
 
     TEXTBOX_DrawContext(&main_ctx1);
@@ -604,15 +615,15 @@ void MEASUREMENT_Menu(void)// **************************************************
         Sleep(0); //for autosleep to work
         if (TEXTBOX_HitTest(&main_ctx1))
         {
-            Sleep(50);
-            LCD_FillAll(LCD_BLACK);
-            TEXTBOX_DrawContext(&main_ctx1);
             if (rqExit1)
             {
                 rqExit1=false;
                 while (TOUCH_IsPressed());
                 return;
             }
+            Sleep(50);
+            LCD_FillAll(LCD_BLACK);
+            TEXTBOX_DrawContext(&main_ctx1);
             Sleep(50);
         }
 
@@ -682,7 +693,7 @@ uint32_t minutes;
 static void DateTime(void){
 uint32_t mon;
 short AMPM1;
-char text1[20];
+char text1[100];
 
     if(NoDate==1) return;
     if(RTCpresent){
@@ -714,6 +725,17 @@ int counter11;
 //    BSP_LCD_SelectLayer(1);
     LCD_FillAll(LCD_BLACK);
     SetColours();
+    /*
+ LCDPoint outline[6];
+
+                outline[0] = LCD_MakePoint(100,000);
+                outline[1] = LCD_MakePoint(150,050);
+                outline[2] = LCD_MakePoint(200,000);
+                outline[3] = LCD_MakePoint(200,200);
+                outline[4] = LCD_MakePoint(120,70);
+                outline[5] = LCD_MakePoint(125,90);
+                LCD_FillPolygon(outline, 6, LCD_COLOR_WHITE);
+*/
 //    LCD_ShowActiveLayerOnly();
 //    ColourSelection=1;
 //    FatLines=false;
@@ -723,29 +745,29 @@ int counter11;
     TEXTBOX_InitContext(&main_ctx);
 
     //Measurement window
-    hbMeas = (TEXTBOX_t){.x0 = COL1, .y0 = 60, .text =" Measurement ", .font = FONT_FRANBIG, .width = 200, .center = 1,
-                            .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = MEASUREMENT_Menu };
+    hbMeas = (TEXTBOX_t){.x0 = COL1, .y0 = 60, .text =" Measurement ", .font = FONT_FRANBIG, .width = 220, .center = 1,
+                            .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = MEASUREMENT_Menu };
     TEXTBOX_Append(&main_ctx, &hbMeas);
  //TDR window
-    hbTools = (TEXTBOX_t){.x0 = COL1, .y0 = 110, .text =" Tools ", .font = FONT_FRANBIG, .width = 200, .center = 1,
-                            .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb =  MenuTools};
+    hbTools = (TEXTBOX_t){.x0 = COL1, .y0 = 110, .text =" Tools ", .font = FONT_FRANBIG, .width = 220, .center = 1,
+                            .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb =  MenuTools};
     TEXTBOX_Append(&main_ctx, &hbTools);
 
     //Generator window
-    hbGen = (TEXTBOX_t){.x0 = COL1, .y0 = 160, .text =" Generator ", .font = FONT_FRANBIG, .width = 200, .center = 1,
-                            .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = GENERATOR_Window_Proc };
+    hbGen = (TEXTBOX_t){.x0 = COL1, .y0 = 160, .text =" Generator ", .font = FONT_FRANBIG, .width = 220, .center = 1,
+                            .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = GENERATOR_Window_Proc };
     TEXTBOX_Append(&main_ctx, &hbGen);
 
-    hbSettings = (TEXTBOX_t){.x0 = COL2, .y0 = 60, .text =" Settings ", .font = FONT_FRANBIG, .width = 230, .center = 1,
-                            .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = MenuSettings };
+    hbSettings = (TEXTBOX_t){.x0 = COL2, .y0 = 60, .text =" Settings ", .font = FONT_FRANBIG, .width = 220, .center = 1,
+                            .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = MenuSettings };
     TEXTBOX_Append(&main_ctx, &hbSettings);
 
     //Reload Pictures WK
-    hbDatPc     = (TEXTBOX_t){.x0 = COL2, .y0 = 110, .text =" Data/ PC ", .font = FONT_FRANBIG, .width = 230, .center = 1,
-                            .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = MenuData_PC };
+    hbDatPc     = (TEXTBOX_t){.x0 = COL2, .y0 = 110, .text =" Data/ PC ", .font = FONT_FRANBIG, .width = 220, .center = 1,
+                            .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = MenuData_PC };
     TEXTBOX_Append(&main_ctx, &hbDatPc);
 
-    hbTimestamp = (TEXTBOX_t) {.x0 = 0, .y0 = 256, .text = "EU1KY AA v." AAVERSION ", mod. DH1AKF, Build: " BUILD_TIMESTAMP "  ", .font = FONT_FRAN,
+    hbTimestamp = (TEXTBOX_t) {.x0 = 0, .y0 = 256, .text = "EU1KY AA v." AAVERSION ", mod. DH1AKF LZ5ZI , Build: " BUILD_TIMESTAMP "  ", .font = FONT_FRAN,
                             .fgcolor = LCD_WHITE, .bgcolor = LCD_BLACK, .cb = Wait_proc  };
     TEXTBOX_Append(&main_ctx, &hbTimestamp);
 
@@ -761,11 +783,13 @@ int counter11;
     for(;;)
     {
         Voltage();
-        if (++counter11>100){
+
+        if (++counter11>100)
+            {
             DateTime();
             counter11=0;
-        }
-        Sleep(10); //for autosleep to work
+            }
+        Sleep(0); //for autosleep to work
         if (TEXTBOX_HitTest(&main_ctx))
         {
             Sleep(50);
@@ -832,38 +856,34 @@ static void Thinlines(void){
 
 static void BeepOn(void){
     FONT_Write(FONT_FRANBIG, LCD_BLACK, LCD_YELLOW, 240, 50,   "  Beep On  ");
-    BeepIsOn=1;
+    BeepOn1=1;
     CFG_SetParam(CFG_PARAM_BeepOn,1);
     CFG_Flush();
 }
 
 static void BeepOff(void){
     FONT_Write(FONT_FRANBIG, LCD_BLACK, LCD_YELLOW, 240, 50,   "  Beep Off ");
-    BeepIsOn=0;
+    BeepOn1=0;
     CFG_SetParam(CFG_PARAM_BeepOn,0);
     CFG_Flush();
 }
 
-static void Exit1(void){
-    rqExit1=true;
-    InitVoltage();
-}
 
 static const TEXTBOX_t tb_col[] = {
     (TEXTBOX_t){ .x0 = XXa, .y0 = 50, .text = "Daylight", .font = FONT_FRANBIG, .width = 200, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = (void(*)(void))Daylight, .cbparam = 1, .next = (void*)&tb_col[1] },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = (void(*)(void))Daylight, .cbparam = 1, .next = (void*)&tb_col[1] },
     (TEXTBOX_t){ .x0 = XXa, .y0 = 100, .text = "Inhouse", .font = FONT_FRANBIG, .width = 200, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = (void(*)(void))Inhouse, .cbparam = 1, .next = (void*)&tb_col[2] },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = (void(*)(void))Inhouse, .cbparam = 1, .next = (void*)&tb_col[2] },
     (TEXTBOX_t){ .x0 = XXa, .y0 = 150, .text = "Fat Lines", .font = FONT_FRANBIG, .width = 200, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = (void(*)(void))Fatlines, .cbparam = 1, .next = (void*)&tb_col[3] },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = (void(*)(void))Fatlines, .cbparam = 1, .next = (void*)&tb_col[3] },
     (TEXTBOX_t){ .x0 = XXa, .y0 = 200, .text = "Thin Lines", .font = FONT_FRANBIG, .width = 200, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = (void(*)(void))Thinlines, .cbparam = 1, .next = (void*)&tb_col[4] },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = (void(*)(void))Thinlines, .cbparam = 1, .next = (void*)&tb_col[4] },
     (TEXTBOX_t){ .x0 = XXa+240, .y0 = 100, .text = "Beep On", .font = FONT_FRANBIG, .width = 200, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = (void(*)(void))BeepOn, .cbparam = 1, .next = (void*)&tb_col[5] },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = (void(*)(void))BeepOn, .cbparam = 1, .next = (void*)&tb_col[5] },
     (TEXTBOX_t){ .x0 = XXa+240, .y0 = 150, .text = "Beep Off", .font = FONT_FRANBIG, .width = 200, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = (void(*)(void))BeepOff, .cbparam = 1, .next = (void*)&tb_col[6] },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = (void(*)(void))BeepOff, .cbparam = 1, .next = (void*)&tb_col[6] },
     (TEXTBOX_t){ .x0 = 240, .y0 = 200, .text = "  Exit   ", .font = FONT_FRANBIG, .width = 200, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = LCD_RED, .cb = (void(*)(void))Exit1, .cbparam = 1,  },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = LCD_RED, .cb = (void(*)(void))Exit1, .cbparam = 1,  },
 };
 
 
@@ -882,7 +902,7 @@ static void Colours(void){
         FONT_Write(FONT_FRANBIG, LCD_BLACK, LCD_YELLOW, 20, 10,   "  Fat Lines  ");
     else
         FONT_Write(FONT_FRANBIG, LCD_BLACK, LCD_YELLOW, 20, 10,   "  Thin Lines ");
-    if(BeepIsOn==1)
+    if(BeepOn1==1)
         FONT_Write(FONT_FRANBIG, LCD_BLACK, LCD_YELLOW, 240, 50,   "  Beep On  ");
     else
         FONT_Write(FONT_FRANBIG, LCD_BLACK, LCD_YELLOW, 240, 50,   "  Beep Off ");
@@ -913,14 +933,16 @@ static void Colours(void){
 }
 
 static const TEXTBOX_t tb_menuTools[] = {
-    (TEXTBOX_t){.x0 = COL1, .y0 = 10, .text = " Cable Length ", .font = FONT_FRANBIG,.width = 200, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = TDR_Proc, .cbparam = 1, .next = (void*)&tb_menuTools[1] },
-    (TEXTBOX_t){.x0 = COL1, .y0 = 60, .text =  " Find Frequency ", .font = FONT_FRANBIG,.width = 200, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = SPECTR_FindFreq , .cbparam = 1, .next = (void*)&tb_menuTools[2] },
-    (TEXTBOX_t){.x0 = COL1, .y0 = 110, .text =  " Quartz Data ", .font = FONT_FRANBIG,.width = 200, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = Quartz_proc , .cbparam = 1, .next = (void*)&tb_menuTools[3] },
-    (TEXTBOX_t){ .x0 = COL1, .y0 = 210, .text = " Main Menu ", .font = FONT_FRANBIG, .width = 200, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = LCD_RED, .cb = (void(*)(void))Exit, .cbparam = 1,},
+    (TEXTBOX_t){.x0 = COL1, .y0 = 10, .text = " Cable Length ", .font = FONT_FRANBIG,.width = 220, .height = 34, .center = 1,
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = TDR_Proc, .cbparam = 1, .next = (void*)&tb_menuTools[1] },
+    (TEXTBOX_t){.x0 = COL1, .y0 = 60, .text =  " Find Frequency ", .font = FONT_FRANBIG,.width = 220, .height = 34, .center = 1,
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = SPECTR_FindFreq , .cbparam = 1, .next = (void*)&tb_menuTools[2] },
+    (TEXTBOX_t){.x0 = COL1, .y0 = 110, .text =  " Quartz Data ", .font = FONT_FRANBIG,.width = 220, .height = 34, .center = 1,
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = Quartz_proc , .cbparam = 1, .next = (void*)&tb_menuTools[3] },
+    (TEXTBOX_t){ .x0 = COL2, .y0 = 10, .text = " Measure Cx Lx", .font = FONT_FRANBIG, .width = 220, .height = 34, .center = 1,
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = CxMeas_Proc, .cbparam = 1, .next = (void*)&tb_menuTools[4] },
+     (TEXTBOX_t){ .x0 = COL1, .y0 = 210, .text = " Main Menu ", .font = FONT_FRANBIG, .width = 220, .height = 34, .center = 1,
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = LCD_RED, .cb = (void(*)(void))Exit, .cbparam = 1,},
 };
 
 static void MenuTools(void){
@@ -938,19 +960,19 @@ static void MenuTools(void){
         Voltage();
         Sleep(0); //for autosleep to work
         if (TEXTBOX_HitTest(&menu1_ctx))
-        {
-            Sleep(0);
-            LCD_FillAll(LCD_BLACK);
-            TEXTBOX_DrawContext(&menu1_ctx);
-            if (rqExitR)
+        {   if (rqExitR)
             {
                 rqExitR=false;
                 while (TOUCH_IsPressed());
                 return;
             }
-            Sleep(50);
+            LCD_FillAll(LCD_BLACK);
+            TEXTBOX_DrawContext(&menu1_ctx);
+            Sleep(0);
+
+            while (TOUCH_IsPressed());
+            Sleep(100);
         }
-        Sleep(0);
     }
 }
 #define COL3 380
@@ -961,7 +983,7 @@ static uint32_t color1, color2;
 int BattVoltage, Batt;
 float VoltFloat, percent;
 int cntr,CountMax;
-char text1[25];
+char text1[100];
 
 void InitVoltage(void){
 
@@ -980,36 +1002,37 @@ LCDColor vbg;
 int VoltRaw;
     if(Volt_max_Display==0) return;
     cntr++;
-    VoltRaw =UB_ADC3_SINGLE_Read_MW(ADC_PF8);
+    VoltRaw =UB_ADC3_SINGLE_Read_MW(ADC_PF9);
     if(VoltRaw<=0){
         sprintf(text1,"Error: %d ", VoltRaw);
-        FONT_Write(FONT_FRANBIG, TextColor, LCD_RED, 260, 210, text1);
+        FONT_Write(FONT_FRANBIG, TextColor, LCD_RED, 240, 210, text1);
         return;
     }
     BattVoltage+=VoltRaw;
-    if(cntr>=CountMax){
-        Batt=BattVoltage/CountMax;// value for calibration
+    if(cntr>=3200){
+        Batt=BattVoltage/3200;// value for calibration
         VoltFloat=(float)Batt/Volt_max_Factor;//614.f  563.0f
         cntr=0;
-        CountMax=3200,
         BattVoltage=0;
-        if(VoltFloat>(float)Volt_max_Display/1000.0f) {
+        if(VoltFloat>(float)Volt_max_Display/1000.0f)
+            {
                 percent=100;
-        }
+            }
         else
             //percent=(int)(VoltFloat*100.f-300.f);
             percent=(int)100.f*((1000.f*VoltFloat-(float)Volt_min_Display)/(Volt_max_Display-Volt_min_Display));
 
-        sprintf(text1,"Bat: %.2f V %.0f", VoltFloat, percent);
-        strcat(text1,"%  ");
+        sprintf(text1," Accu: %.2f V %.0f%%   ", VoltFloat, percent);
+        //strcat(text1,"%  ");
         vbg=BackGrColor;
-        if(percent<=25){
+        if(percent<=25)
             vbg=LCD_RED;
-        }
-        else if(percent<=50){
-            vbg= LCD_RGB(127, 127, 0);//LCD_YELLOW
-        }
-        FONT_Write(FONT_FRANBIG, TextColor, vbg, 290, 210, text1);
+        else if(percent<=50)
+            vbg=LCD_GRAY;   //LCD_RGB(127, 127, 0);//LCD_YELLOW
+        if(percent>50)
+            FONT_Write(FONT_FRANBIG, LCD_GREEN, vbg, 250, 210, text1);
+        else
+            FONT_Write(FONT_FRANBIG, TextColor, vbg, 250, 210, text1);
     }
 }
 
@@ -1065,15 +1088,8 @@ void VoltCase2(void){
     LCD_Rectangle(LCD_MakePoint(COL2,160),LCD_MakePoint(COL2+200,160+34),LCD_RED);
 }
 
-static int rqExit3;
-
-static void Exit3(void){
-    rqExit3=1;
-    InitVoltage();
-}
-
 void ShowVoltage(void){
-char str1[30];
+char str1[100];
 
     sprintf(str1,"MaxV: %.3f ", (float)Volt_max_Display/1000.f);
     FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 120, 10, str1);
@@ -1108,27 +1124,27 @@ void SetMax(void){
 
 static const TEXTBOX_t volt_menu[] = {
     (TEXTBOX_t){.x0 = COL1, .y0 = 10, .text =  " -0.01 ", .font = FONT_FRANBIG,.width = 90, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = minus10 , .cbparam = 1, .next = (void*)&volt_menu[1] },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = minus10 , .cbparam = 1, .next = (void*)&volt_menu[1] },
     (TEXTBOX_t){.x0 = COL3, .y0 = 10, .text =  " +0.01 ", .font = FONT_FRANBIG,.width = 90, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = plus10 , .cbparam = 1, .next = (void*)&volt_menu[2] },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = plus10 , .cbparam = 1, .next = (void*)&volt_menu[2] },
     (TEXTBOX_t){.x0 = COL1, .y0 = 60, .text =  " -0.1 ", .font = FONT_FRANBIG,.width = 90, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = minus100 , .cbparam = 1, .next = (void*)&volt_menu[3] },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = minus100 , .cbparam = 1, .next = (void*)&volt_menu[3] },
     (TEXTBOX_t){.x0 = COL3, .y0 = 60, .text =  " +0.1 ", .font = FONT_FRANBIG,.width = 90, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = plus100 , .cbparam = 1, .next = (void*)&volt_menu[4] },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = plus100 , .cbparam = 1, .next = (void*)&volt_menu[4] },
     (TEXTBOX_t){.x0 = COL1, .y0 = 110, .text =  " -1.0 ", .font = FONT_FRANBIG,.width = 90, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = minus1000 , .cbparam = 1, .next = (void*)&volt_menu[5] },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = minus1000 , .cbparam = 1, .next = (void*)&volt_menu[5] },
     (TEXTBOX_t){.x0 = COL3, .y0 = 110, .text =  " +1.0 ", .font = FONT_FRANBIG,.width = 90, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = plus1000 , .cbparam = 1, .next = (void*)&volt_menu[6] },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = plus1000 , .cbparam = 1, .next = (void*)&volt_menu[6] },
     (TEXTBOX_t){.x0 = 110, .y0 = 110, .text =    "Set Max Value", .font = FONT_FRANBIG,.width = 220, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = SetMax , .cbparam = 1, .next = (void*)&volt_menu[7] },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = SetMax , .cbparam = 1, .next = (void*)&volt_menu[7] },
     (TEXTBOX_t){.x0 = COL1, .y0 = 160, .text =    " Volt Max Displ  ", .font = FONT_FRANBIG,.width = 200, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = VoltCase1 , .cbparam = 1, .next = (void*)&volt_menu[8] },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = VoltCase1 , .cbparam = 1, .next = (void*)&volt_menu[8] },
     (TEXTBOX_t){.x0 = COL2, .y0 = 160, .text =  " Volt Min Displ ", .font = FONT_FRANBIG,.width = 200, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = VoltCase2 , .cbparam = 1, .next = (void*)&volt_menu[9] },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = VoltCase2 , .cbparam = 1, .next = (void*)&volt_menu[9] },
     (TEXTBOX_t){ .x0 = COL2, .y0 = 210, .text = "Voltage Display Off", .font = FONT_FRANBIG, .width = 240, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = VoltOff , .cbparam = 1,.next = (void*)&volt_menu[10]},
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = VoltOff , .cbparam = 1,.next = (void*)&volt_menu[10]},
     (TEXTBOX_t){ .x0 = COL1, .y0 = 210, .text = " Main Menu ", .font = FONT_FRANBIG, .width = 200, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = LCD_RED, .cb = (void(*)(void))Exit3, .cbparam = 1,},
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = LCD_RED, .cb = (void(*)(void))Exit3, .cbparam = 1,},
 };
 
 
@@ -1253,19 +1269,19 @@ int k;
 
 static const TEXTBOX_t tb_menu1[] = {
     (TEXTBOX_t){.x0 = COL1, .y0 = 10, .text =  " Colours/Beep ", .font = FONT_FRANBIG,.width = 200, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = Colours , .cbparam = 1, .next = (void*)&tb_menu1[1] },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = Colours , .cbparam = 1, .next = (void*)&tb_menu1[1] },
     (TEXTBOX_t){.x0 = COL1, .y0 = 60, .text =  " Configuration ", .font = FONT_FRANBIG,.width = 200, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = CFG_ParamWnd , .cbparam = 1, .next = (void*)&tb_menu1[2] },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = CFG_ParamWnd , .cbparam = 1, .next = (void*)&tb_menu1[2] },
     (TEXTBOX_t){.x0 = COL1, .y0 = 110, .text =    " Calibration  ", .font = FONT_FRANBIG,.width = 200, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = MenuCalibration , .cbparam = 1, .next = (void*)&tb_menu1[3] },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = MenuCalibration , .cbparam = 1, .next = (void*)&tb_menu1[3] },
     (TEXTBOX_t){.x0 = COL1, .y0 = 160, .text =  " DSP ", .font = FONT_FRANBIG,.width = 200, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = FFTWND_Proc , .cbparam = 1, .next = (void*)&tb_menu1[4] },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = FFTWND_Proc , .cbparam = 1, .next = (void*)&tb_menu1[4] },
     (TEXTBOX_t){ .x0 = COL2, .y0 = 10, .text = " Accu Settings ", .font = FONT_FRANBIG, .width = 200, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = MenuAccu , .cbparam = 1,.next = (void*)&tb_menu1[5]},
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = MenuAccu , .cbparam = 1,.next = (void*)&tb_menu1[5]},
     (TEXTBOX_t){ .x0 = COL2, .y0 = 60, .text = " Date/Time ", .font = FONT_FRANBIG, .width = 200, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = MenuRTC , .cbparam = 1,.next = (void*)&tb_menu1[6]},
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = MenuRTC , .cbparam = 1,.next = (void*)&tb_menu1[6]},
     (TEXTBOX_t){ .x0 = COL1, .y0 = 210, .text = " Main Menu ", .font = FONT_FRANBIG, .width = 200, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = LCD_RED, .cb = (void(*)(void))Exit, .cbparam = 1,},
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = LCD_RED, .cb = (void(*)(void))Exit, .cbparam = 1,},
 };
 
 static void MenuSettings(void){
@@ -1284,14 +1300,15 @@ static void MenuSettings(void){
         Sleep(0); //for autosleep to work
         if (TEXTBOX_HitTest(&menu1_ctx))
         {
-            Sleep(0);
-            LCD_FillAll(LCD_BLACK);
-            TEXTBOX_DrawContext(&menu1_ctx);
             if (rqExitR)
             {
+                while(TOUCH_IsPressed());
                 rqExitR=false;
                 return;
             }
+            Sleep(0);
+            LCD_FillAll(LCD_BLACK);
+            TEXTBOX_DrawContext(&menu1_ctx);
             Sleep(50);
         }
         Sleep(0);
@@ -1410,13 +1427,13 @@ uint32_t fmax1,fmax2,fmax3,k;
 
 static const TEXTBOX_t tb_menu2[] = {
     (TEXTBOX_t){.x0 = COL1, .y0 = 100, .text =    " HW Calibration, only at first run !!!  ", .font = FONT_FRANBIG,.width = 440, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = OSL_CalErrCorr , .cbparam = 1, .next = (void*)&tb_menu2[1] },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = OSL_CalErrCorr , .cbparam = 1, .next = (void*)&tb_menu2[1] },
     (TEXTBOX_t){.x0 = COL1, .y0 =25, .text =  " OSL Calibration, use calibration kit !!! ", .font = FONT_FRANBIG,.width = 440, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = OSL_CalWnd , .cbparam = 1, .next = (void*)&tb_menu2[2] },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = OSL_CalWnd , .cbparam = 1, .next = (void*)&tb_menu2[2] },
                  (TEXTBOX_t){.x0 = COL1, .y0 =150, .text =  " Oscillator Test (Fmax) ", .font = FONT_FRANBIG,.width = 440, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = OsciTest , .cbparam = 1, .next = (void*)&tb_menu2[3] },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = OsciTest , .cbparam = 1, .next = (void*)&tb_menu2[3] },
     (TEXTBOX_t){ .x0 = COL1, .y0 = 210, .text = " Main Menu ", .font = FONT_FRANBIG, .width = 200, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = LCD_RED, .cb = (void(*)(void))Exit, .cbparam = 1,},
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = LCD_RED, .cb = (void(*)(void))Exit, .cbparam = 1,},
 };
 
 static void MenuCalibration(void){
@@ -1434,15 +1451,16 @@ static void MenuCalibration(void){
         Sleep(0); //for autosleep to work
         if (TEXTBOX_HitTest(&menu2_ctx))
         {
-            Voltage();
-            Sleep(0);
-            LCD_FillAll(LCD_BLACK);
-            TEXTBOX_DrawContext(&menu2_ctx);
-            if (rqExitR)
+             if (rqExitR)
             {
                 rqExitR=false;
                 return;
             }
+            Voltage();
+            Sleep(0);
+            LCD_FillAll(LCD_BLACK);
+            TEXTBOX_DrawContext(&menu2_ctx);
+
             Sleep(50);
         }
         Sleep(0);

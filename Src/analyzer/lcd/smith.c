@@ -99,6 +99,7 @@ void SMITH_DrawGrid(int32_t x, int32_t y, int32_t r, LCDColor color, LCDColor bg
     // SWR = 2.0 circle
     if (flags & SMITH_SWR2)
         LCD_Circle(LCD_MakePoint(x , y), (int32_t)(r / 3.f), color);
+    //LCD_Circle(LCD_MakePoint(x , y), (int32_t)(r / 2.33), color);
 
 }
 

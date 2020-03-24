@@ -13,6 +13,7 @@
 #include "panvswr2.h"
 
 bool PanFreqWindow(uint32_t *pFkhz, BANDSPAN *pBs);
+bool SetFreqKBD(CFG_PARAM_t param, uint32_t *pFkhz, BANDSPAN *pBs);
 void MultiSWR_Proc(void);
 static uint8_t rqDel;
 

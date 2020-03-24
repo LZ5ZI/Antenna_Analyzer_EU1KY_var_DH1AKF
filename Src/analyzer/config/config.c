@@ -4,7 +4,7 @@
 #include "gen.h"
 #include <string.h>
 #include <stdint.h>
-
+#include "stm32746g_discovery.h"
 static uint32_t g_cfg_array[CFG_NUM_PARAMS] = { 0 };
 const char *g_aa_dir = "/aa";
 static const char *g_cfg_dir = "/aa/config";
@@ -13,7 +13,7 @@ const char *g_cfg_osldir = "/aa/osl";
 static uint32_t resetRequired = 0;
  uint8_t ColourSelection;
  bool FatLines;
- int BeepIsOn;
+ int BeepOn1;
  uint32_t rqExit;
  uint32_t BackGrColor;
  uint32_t CurvColor;
@@ -352,23 +352,6 @@ static const CFG_CHANGEABLE_PARAM_DESCR_t cfg_ch_descr_table[] =
 
 static const uint32_t cfg_ch_descr_table_num = sizeof(cfg_ch_descr_table) / sizeof(CFG_CHANGEABLE_PARAM_DESCR_t);
 
-void CFG_Init_additions(void){// wk 21.01.2019
-    CFG_SetParam(CFG_PARAM_BAND_FMIN, 100000ul);
-    CFG_SetParam(CFG_PARAM_BAND_FMAX, 600000000ul);
-    CFG_SetParam(CFG_PARAM_SI5351_MAX_FREQ, 200000000ul);
-    CFG_SetParam(CFG_PARAM_SI5351_CAPS, 3);
-    CFG_SetParam(CFG_PARAM_TDR_VF, 66);
-    CFG_SetParam(CFG_PARAM_MULTI_F1, 3600000);
-    CFG_SetParam(CFG_PARAM_MULTI_BW1, 100000);
-    CFG_SetParam(CFG_PARAM_Volt_max_Display, 4000);
-    CFG_SetParam(CFG_PARAM_Volt_min_Display, 3100);
-    CFG_SetParam(CFG_PARAM_Daylight,0);              // Daylight (1)  Inhouse  (0)
-    CFG_SetParam(CFG_PARAM_Fatlines,0);              // Fat Lines (1) Thin Lines (0)
-    CFG_SetParam(CFG_PARAM_BeepOn,1);                // Beep on (1) Beep off (0)
-    CFG_SetParam(CFG_PARAM_Date,20180919);           // Date yyyymmdd
-    CFG_SetParam(CFG_PARAM_Time,1930);
-}
-
 //CFG module initialization
 void CFG_Init(void)
 {
@@ -379,9 +362,9 @@ void CFG_Init(void)
     CFG_SetParam(CFG_PARAM_MEAS_F, 14000000ul);
     CFG_SetParam(CFG_PARAM_SYNTH_TYPE, 0);
     CFG_SetParam(CFG_PARAM_SI5351_XTAL_FREQ, 27000000ul);
-    CFG_SetParam(CFG_PARAM_SI5351_BUS_BASE_ADDR, 0xC0);// wk 22.01.2019
+    CFG_SetParam(CFG_PARAM_SI5351_BUS_BASE_ADDR, 0x00);
     CFG_SetParam(CFG_PARAM_SI5351_CORR, 0);
-    CFG_SetParam(CFG_PARAM_OSL_SELECTED, 0ul);// wk 21.01.2019
+    CFG_SetParam(CFG_PARAM_OSL_SELECTED, ~0ul);
     CFG_SetParam(CFG_PARAM_R0, 50);
     CFG_SetParam(CFG_PARAM_OSL_RLOAD, 50);
     CFG_SetParam(CFG_PARAM_OSL_RSHORT, 5);
@@ -407,8 +390,19 @@ void CFG_Init(void)
     CFG_SetParam(CFG_PARAM_S1P_TYPE, 0);
     CFG_SetParam(CFG_PARAM_SHOW_HIDDEN, 0);
     CFG_SetParam(CFG_PARAM_SCREENSHOT_FORMAT, 0);
-    CFG_Init_additions();// wk 21.01.2019
+    CFG_SetParam(CFG_PARAM_BAND_FMIN, 100000ul);
+    CFG_SetParam(CFG_PARAM_BAND_FMAX, 600000000ul);
+    CFG_SetParam(CFG_PARAM_SI5351_MAX_FREQ, 200000000ul);
+    CFG_SetParam(CFG_PARAM_SI5351_CAPS, 3);
+    CFG_SetParam(CFG_PARAM_TDR_VF, 66);
+    CFG_SetParam(CFG_PARAM_Volt_max_Display, 4000);
+    CFG_SetParam(CFG_PARAM_Volt_min_Display, 3100);
 
+    CFG_SetParam(CFG_PARAM_Daylight,0);              // Daylight (1)  Inhouse  (0)
+    CFG_SetParam(CFG_PARAM_Fatlines,0);              // Fat Lines (1) Thin Lines (0)
+    CFG_SetParam(CFG_PARAM_BeepOn,1);                // Beep on (1) Beep off (0)
+    CFG_SetParam(CFG_PARAM_Date,20180919);           // Date yyyymmdd
+    CFG_SetParam(CFG_PARAM_Time,1930);
     //Load parameters from file on SD card
     FRESULT res;
     FIL fo = { 0 };
@@ -436,7 +430,6 @@ void CFG_Init(void)
             f_close(&fo);
             //Replace configuration version to current
             CFG_SetParam(CFG_PARAM_VERSION, *(uint32_t*)AAVERSION);
-            CFG_Init_additions();// wk 21.01.2019
             //And write extended file
             CFG_Flush();
         }
@@ -473,7 +466,6 @@ void CFG_Init(void)
             && CFG_GetParam(CFG_PARAM_SI5351_MAX_FREQ) != 290000000ul)
             CFG_SetParam(CFG_PARAM_SI5351_MAX_FREQ, 160000000ul);
     }
-    if ((CFG_GetParam(CFG_PARAM_BAND_FMIN) >= 500000ul)) CFG_SetParam(CFG_PARAM_BAND_FMIN, 500000ul);// wk 21.01.2019
     if ((CFG_GetParam(CFG_PARAM_BAND_FMAX) <= BAND_FMIN) || (CFG_GetParam(CFG_PARAM_BAND_FMAX) % 1000000 != 0))
         CFG_SetParam(CFG_PARAM_BAND_FMAX, 150000000ul);
     if (CFG_GetParam(CFG_PARAM_TDR_VF) < 1 || CFG_GetParam(CFG_PARAM_TDR_VF) > 100)
@@ -659,6 +651,7 @@ static void _hit_prev(void)
     {
         if (--selected_param >= cfg_ch_descr_table_num)
             selected_param = cfg_ch_descr_table_num - 1;
+        while(TOUCH_IsPressed());
         //Bypass changeable parameters for which isvalid() is defined and it returns zero
         if (cfg_ch_descr_table[selected_param].isvalid != 0)
         {
@@ -667,6 +660,7 @@ static void _hit_prev(void)
         }
         else
             break;
+    while(TOUCH_IsPressed());
     }
     TEXTBOX_SetText(pctx, hbNameIdx, CFG_GetStringName(selected_param));
     TEXTBOX_SetText(pctx, hbValIdx, CFG_GetStringValue(selected_param));
@@ -682,6 +676,7 @@ static void _hit_next(void)
         selected_param++;
         if (selected_param >= cfg_ch_descr_table_num)
             selected_param = 0;
+        while(TOUCH_IsPressed());
         //Bypass changeable parameters for which isvalid() is defined and it returns zero
         if (cfg_ch_descr_table[selected_param].isvalid != 0)
         {
@@ -704,15 +699,17 @@ static void _hit_save(void)
     GEN_Init(); //In case if synthesizer type has changed
     if (0 != resetRequired)
     {
-        Sleep(200);
+       // Sleep(200);
         NVIC_SystemReset();
     }
     rqExit = 1;
+    while(TOUCH_IsPressed());
 }
 
 static void _hit_ex(void)
 {
     rqExit = 1;
+    while(TOUCH_IsPressed());
 }
 
 static void _hit_prev_value(void)
@@ -722,6 +719,7 @@ static void _hit_prev_value(void)
     CFG_SetParam(cfg_ch_descr_table[selected_param].id, prevValue);
     TEXTBOX_SetText(pctx, hbValIdx, CFG_GetStringValue(selected_param));
     resetRequired += cfg_ch_descr_table[selected_param].resetRequired;
+    while(TOUCH_IsPressed());
 }
 
 static void _hit_next_value(void)
@@ -731,6 +729,7 @@ static void _hit_next_value(void)
     CFG_SetParam(cfg_ch_descr_table[selected_param].id, nextValue);
     TEXTBOX_SetText(pctx, hbValIdx, CFG_GetStringValue(selected_param));
     resetRequired += cfg_ch_descr_table[selected_param].resetRequired;
+    while(TOUCH_IsPressed());
 }
 
 // Changeable parameters editor window

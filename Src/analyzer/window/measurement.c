@@ -48,6 +48,10 @@ uint8_t seconds;// W.Kiefer
 static void ShowF()
 {
     char str[50];
+    float freq=(float)(CFG_GetParam(CFG_PARAM_MEAS_F) / 1000000.0);
+    sprintf(str, "F: %.3f MHz        ",freq);
+ /*
+    uint8_t i,j;
     uint8_t i,j;
     unsigned int freq=(unsigned int)(CFG_GetParam(CFG_PARAM_MEAS_F) / 1000);
     if(freqOld==freq) return;
@@ -63,8 +67,9 @@ static void ShowF()
         str[i-3]='.';
         str[i+5]=0;
     }
-    LCD_FillRect(LCD_MakePoint(80, 38), LCD_MakePoint(214, 72), BackGrColor);
-    FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 0, 36, str);// WK
+    */
+    //LCD_FillRect(LCD_MakePoint(80, 38), LCD_MakePoint(214, 70), BackGrColor);
+    FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 0, 37, str);// WK
     GEN_SetMeasurementFreq(CFG_GetParam(CFG_PARAM_MEAS_F));
 }
 
@@ -75,9 +80,9 @@ static void ShowF()
         TimeFlag=0;
         seconds++;
         sprintf(strfreq, "Frequ: %u kHz ", (unsigned int)(Timer5Value));
-        FONT_Write(FONT_FRAN, TextColor, BackGrColor, 280, 230, strfreq);
+        FONT_Write(FONT_FRAN, TextColor, BackGrColor, 285, 230, strfreq);
         sprintf(strfreq, "Runtime: %d s", seconds);
-        FONT_Write(FONT_FRAN, TextColor, BackGrColor, 280, 250, strfreq);
+        FONT_Write(FONT_FRAN, TextColor, BackGrColor, 285, 250, strfreq);
     }
  }
 
@@ -90,18 +95,41 @@ void MEASUREMENT_ParSerial(void){
 
 void DrawSmallSmith(int X0, int Y0, int R, float complex rx)
 {
-    LCD_FillRect(LCD_MakePoint(X0 - R - 20, Y0 - R - 5), LCD_MakePoint(LCD_GetWidth()-3, LCD_GetHeight()-3), BackGrColor);
+    LCD_FillRect(LCD_MakePoint(X0 - R - 20, Y0 - R - 5), LCD_MakePoint(LCD_GetWidth()-4, LCD_GetHeight()-4), BackGrColor);
     float complex G = OSL_GFromZ(rx, CFG_GetParam(CFG_PARAM_R0));
     if (isMatch)
-    { //Print LC match
-        X0 = X0 - R - 20;
+    { //Draw LC match
+        X0 = X0 - R - 15;
         Y0 -= R;
-		FONT_Print(FONT_FRAN, LCD_PURPLE, LCD_BLACK, X0, Y0, "  LC match for SRC Z0 = %d Ohm", CFG_GetParam(CFG_PARAM_R0));
-		Y0 += FONT_GetHeight(FONT_FRAN) + 4;
-		FONT_Write(FONT_FRAN, LCD_WHITE, LCD_BLACK, X0, Y0, "SrcParallel       Serial     LoadParallel");
-		Y0 += FONT_GetHeight(FONT_FRAN) + 4;
-		MATCH_Calc(X0,Y0,rx);
-		return;
+        MATCH_S matches[4];
+
+        uint32_t nMatches = MATCH_Calc(rx, matches);
+        if (0 == nMatches)
+        {
+            FONT_Write(FONT_FRAN, LCD_WHITE, BackGrColor, X0, Y0, "No LC match for this load");
+        }
+        else
+        {
+            uint32_t i;
+            uint32_t fHz = CFG_GetParam(CFG_PARAM_MEAS_F);
+            FONT_Print(FONT_FRAN, TextColor, BackGrColor, X0, Y0, "LC match for SRC Z0 = %d", CFG_GetParam(CFG_PARAM_R0));
+            Y0 += FONT_GetHeight(FONT_FRAN) + 4;
+            FONT_Write(FONT_FRAN, TextColor, BackGrColor, X0, Y0, "SRCpar   Ser   LoadPar");
+            Y0 += FONT_GetHeight(FONT_FRAN) + 4;
+            for (i = 0; i < nMatches; i++)
+            {
+                char strxpl[32];
+                char strxps[32];
+                char strxs[32];
+                MATCH_XtoStr(fHz, matches[i].XPL, strxpl);
+                MATCH_XtoStr(fHz, matches[i].XPS, strxps);
+                MATCH_XtoStr(fHz, matches[i].XS, strxs);
+                FONT_Print(FONT_FRAN, TextColor, BackGrColor, X0, Y0, "%s, %s, %s", strxps, strxs, strxpl);
+                Y0 += FONT_GetHeight(FONT_FRAN) + 4;
+            }
+
+        }
+        return;
     }
 
     SMITH_DrawGrid(X0, Y0, R, Color2, BackGrColor, SMITH_R50 | SMITH_Y50 | SMITH_R25 | SMITH_R10 | SMITH_R100 | SMITH_R200 |
@@ -174,7 +202,7 @@ if(parallel==1){
 char str[40] = "";
     MeasMagDif=DSP_MeasuredDiffdB();
     sprintf(str, "Magnitude diff %.2f dB     ", MeasMagDif);
-    LCD_FillRect(LCD_MakePoint(1,62),LCD_MakePoint(260,151),BackGrColor);
+    LCD_FillRect(LCD_MakePoint(1,71),LCD_MakePoint(261,156),BackGrColor);
     if(parallel==1){
         if(r >= 5000.0f) sprintf(str, "Rp > 5k ");
         else if (r >= 999.5f)
@@ -183,7 +211,7 @@ char str[40] = "";
             sprintf(str, "Rp: %.1f ", r);
         else
             sprintf(str, "Rp: %.2f ", r);
-        if(fabsf(im) >= 5000.0f) sprintf(&str[strlen(str)], "|Xp| > 5k");
+        if(fabsf(im) >= 5000.0f) sprintf(str[strlen(str)], "|Xp| > 5k");
         else if (fabsf(im) > 999.5f)
             sprintf(&str[strlen(str)], "Xp:%.1f k", im / 1000.0f);
         else if (fabsf(im) >= 199.5f)
@@ -198,7 +226,7 @@ char str[40] = "";
             sprintf(str, "Rs: %.1f ", r);
         else
             sprintf(str, "Rs: %.2f ", r);
-        if(fabsf(im) >= 5000.0f) sprintf(&str[strlen(str)], "|Xs| > 5k");
+        if(fabsf(im) >= 5000.0f) sprintf(str[strlen(str)], "|Xs| > 5k");
         else if (fabsf(im) > 999.5f)
             sprintf(&str[strlen(str)], "Xs:%.1f k", im / 1000.0f);
         else if (fabsf(im) >= 199.5f)
@@ -207,18 +235,18 @@ char str[40] = "";
             sprintf(&str[strlen(str)], "Xs: %.2f", im);
     }
 
-    FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 4, 92, str);
+    FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 4, 97, str);
 
 //    FONT_ClearHalfLine(FONT_FRANBIG, BackGrColor, 62);
     if(VSWR>100.0)
         sprintf(str, "VSWR: %.0f (Z0 %d)", VSWR, CFG_GetParam(CFG_PARAM_R0));
     else
     sprintf(str, "VSWR: %.1f (Z0 %d)   ", VSWR, CFG_GetParam(CFG_PARAM_R0));
-    FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 4, 63, str);
+    FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 4, 67, str);
 
     if(im>=0){
     //calculate equivalent capacity and inductance (if XX is big enough)
-        if((im > 1.0) && (im < 5000.0f))// XX > 2.0 && XX < 1500.
+        if(im > 1.0 && im < 5000.0f)// XX > 2.0 && XX < 1500.
         {
             float Luh = 1e6 * fabsf(im) / (2.0 * 3.1415926 * GEN_GetLastFreq());
             if(parallel==1)
@@ -232,7 +260,7 @@ char str[40] = "";
         }
     }
     else {
-        if ((im < -1.0) && (im > -5000.0f))
+        if (im < -1.0 && im > -5000.0f)
         {
             float Cpf = 1e12 / (2.0 * 3.1415926 * GEN_GetLastFreq() * fabs(im));
             if(parallel==1)
@@ -245,9 +273,9 @@ char str[40] = "";
             else sprintf(str, "Cs out of range");
         }
     }
-    FONT_Write(FONT_FRANBIG, Color1, BackGrColor, 4, 122, str);
+    FONT_Write(FONT_FRANBIG, Color1, BackGrColor, 4, 127, str);
 
-    LCD_Rectangle(LCD_MakePoint(0,63),LCD_MakePoint(262,152),TextColor);
+    LCD_Rectangle(LCD_MakePoint(0,70),LCD_MakePoint(262,157),TextColor);
     //Calculated matched cable loss at this frequency
     FONT_ClearHalfLine(FONT_FRAN, BackGrColor, 158);
     float ga = cabsf(OSL_GFromZ(rx, CFG_GetParam(CFG_PARAM_R0))); //G amplitude
@@ -257,7 +285,7 @@ char str[40] = "";
         if (cl < 0.001f)
             cl = 0.f;
         sprintf(str, "MCL: %.2f dB  |Z|: %.1f", cl, cabsf(rx));
-        FONT_Write(FONT_FRAN, Color1, BackGrColor, 0, 158, str);
+        FONT_Write(FONT_FRAN, Color1, BackGrColor, 0, 163, str);
     }
 }
 
@@ -277,29 +305,47 @@ static void MeasurementModeGraph(DSP_RX in)
     {
         if(TOUCH_IsPressed()) return;
         vswr = vswr500[idx];
-        if(vswr!=9999.0){
+        if(vswr!=9999.0)
+            {
             if (vswr > 12.0 || isnan(vswr) || isinf(vswr) || vswr < 1.0) //Graph limit is VSWR 3.0
                 vswr = 12.0;
             vswr=10.2f*log10f(vswr);// smooth curve ** WK **                                               //Including uninitialized values
             if(idx==0)
-                p1=LCD_MakePoint(SCAN_ORIGIN_X + (idx - 1) *2, SCAN_ORIGIN_Y + 11 - (int)((vswr * 30-140)/11));
+                p1=LCD_MakePoint(SCAN_ORIGIN_X + (idx) *2, SCAN_ORIGIN_Y + 11 - (int)((vswr * 30-140)/11));
             else
-            {
-                p2=LCD_MakePoint(SCAN_ORIGIN_X + idx * 2, SCAN_ORIGIN_Y + 11 - (int)((vswr * 30-140)/11));
+                {
+                p2=LCD_MakePoint(SCAN_ORIGIN_X + (idx+1) * 2, SCAN_ORIGIN_Y + 11 - (int)((vswr * 30-140)/11));
                 LCD_Line( p1,p2,CurvColor);
                 LCD_Line((LCDPoint){p1.x,p1.y+1},(LCDPoint){p2.x,p2.y+1},CurvColor);
                 p1=p2;
+                }
             }
-        }
         else if (idx==0)  p1=LCD_MakePoint(SCAN_ORIGIN_X -2, SCAN_ORIGIN_Y -9);
     }
 }
+
 
 static void MEASUREMENT_Exit(void)
 {
     MeasRqExit = 1;
 }
+static void FDecr(uint32_t step)    //5ZI
+{
+    uint32_t MeasurementFreq = CFG_GetParam(CFG_PARAM_MEAS_F);
 
+    if(MeasurementFreq <= step+BAND_FMIN)
+    {
+        MeasurementFreq = BAND_FMIN;
+    }
+    else
+        MeasurementFreq -= step;
+    CFG_SetParam(CFG_PARAM_MEAS_F, MeasurementFreq);
+    fChanged = 1;
+    Sleep(10);
+    while(TOUCH_IsPressed());
+}
+
+/*
 static void FDecr(uint32_t step)
 {
     uint32_t MeasurementFreq = CFG_GetParam(CFG_PARAM_MEAS_F);
@@ -325,8 +371,24 @@ static void FDecr(uint32_t step)
         }
     }
     Sleep(500);
-}
+    while(TOUCH_IsPressed());
+}*/
 
+static void FIncr(uint32_t step)    //5ZI
+{
+    uint32_t MeasurementFreq = CFG_GetParam(CFG_PARAM_MEAS_F);
+
+    if ((MeasurementFreq+step) > CFG_GetParam(CFG_PARAM_BAND_FMAX))
+        MeasurementFreq = CFG_GetParam(CFG_PARAM_BAND_FMAX);
+    else
+        MeasurementFreq += step;
+
+    CFG_SetParam(CFG_PARAM_MEAS_F, MeasurementFreq);
+    fChanged = 1;
+    Sleep(10);
+    while(TOUCH_IsPressed());
+}
+/*
 static void FIncr(uint32_t step)
 {
     uint32_t MeasurementFreq = CFG_GetParam(CFG_PARAM_MEAS_F);
@@ -352,9 +414,10 @@ static void FIncr(uint32_t step)
         fChanged = 1;
     }
     Sleep(500);
+    while(TOUCH_IsPressed());
 }
-
-static void MEASUREMENT_FDecr_500k(void)
+*/
+void MEASUREMENT_FDecr_500k(void)
 {
     FDecr(meas_maxstep);
 }
@@ -374,7 +437,7 @@ static void MEASUREMENT_FIncr_100k(void)
 {
     FIncr(100000);
 }
-static void MEASUREMENT_FIncr_500k(void)
+void MEASUREMENT_FIncr_500k(void)
 {
     FIncr(meas_maxstep);
 }
@@ -434,8 +497,8 @@ static const struct HitRect MeasHitArr[] =// Set frequency...
     HITRECT( 316,   0,  82, 37, MEASUREMENT_FIncr_100k),
     HITRECT( 398,   0,  82, 37, MEASUREMENT_FIncr_500k),
     HITRECT( 278, 90, 201, 181, MEASUREMENT_SmithMatch),
-    HITRECT( 278, 58, 100, 34, MEASUREMENT_SmithMatch),
-    HITRECT( 0, 63, 244, 89, MEASUREMENT_ParSerial),
+    HITRECT( 278, 55, 100, 34, MEASUREMENT_SmithMatch),
+    HITRECT( 0, 70, 260, 84, MEASUREMENT_ParSerial),
     HITEND
 };
 
@@ -447,6 +510,10 @@ void ShowIncDec(void){
     FONT_Write(FONT_FRANBIG, Color1, BackGrColor,320, 2, "+0.1M");
     FONT_Write(FONT_FRANBIG, Color1, BackGrColor,402, 2, "+0.5M");
 }
+//Measurement mode window. To change it to VSWR tap the lower part of display.
+//To change frequency, in steps of +/- 500, 100 and 10 kHz, tap top part of the display,
+//the step depends on how far you tap from the center.
+
 
 //Measurement mode window. To change it to VSWR tap the lower part of display.
 //To change frequency, in steps of +/- 500, 100 and 10 kHz, tap top part of the display,
@@ -488,9 +555,12 @@ void Single_Frequency_Proc(void)
     }
 
     LCD_FillRect(LCD_MakePoint(0,0), LCD_MakePoint(479,271), BackGrColor); // Graph rectangle
-    FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 120, 60, "Single Frequency Mode");
-    Sleep(1000);
-    LCD_FillRect(LCD_MakePoint(120,60), LCD_MakePoint(479,140), BackGrColor); // Graph rectangle
+    //LCD_Rectangle(LCD_MakePoint(0,0), LCD_MakePoint(479,271), TextColor); // Graph rectangle
+    //Sleep(2000);
+
+    //FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 120, 60, "Single Frequency Mode");
+    //Sleep(1000);
+    //LCD_FillRect(LCD_MakePoint(120,60), LCD_MakePoint(479,140), BackGrColor); // Graph rectangle
     if (-1 == OSL_GetSelected())
     {
         FONT_Write(FONT_FRANBIG, LCD_RED, BackGrColor, 80, 120, "No calibration file selected!");
@@ -500,8 +570,8 @@ void Single_Frequency_Proc(void)
     FONT_Write(FONT_FRANBIG, CurvColor, BackGrColor, 6, 236, " Exit");
     FONT_Write(FONT_FRAN, TextColor, BackGrColor, 92, 250, "Set frequency");
     FONT_Write(FONT_FRAN, TextColor, BackGrColor, 182, 250, "Save snapshot ");
-    freqOld=0;//to ensure that frequency is shown in next step
-    ShowF();
+
+
 
  //   LCD_Rectangle(LCD_MakePoint(SCAN_ORIGIN_X - 1, SCAN_ORIGIN_Y-10), LCD_MakePoint(SCAN_ORIGIN_X + 201, SCAN_ORIGIN_Y + 22), LCD_BLUE);
     firstRun=0;
@@ -531,7 +601,7 @@ void Single_Frequency_Proc(void)
         MeasRedrawWindow = 0;
         LCD_FillRect(LCD_MakePoint(SCAN_ORIGIN_X, SCAN_ORIGIN_Y-9), LCD_MakePoint(SCAN_ORIGIN_X + 200, SCAN_ORIGIN_Y + 21), BackGrColor); // Graph rectangle
         LCD_Rectangle(LCD_MakePoint(SCAN_ORIGIN_X - 1, SCAN_ORIGIN_Y-10), LCD_MakePoint(SCAN_ORIGIN_X + 201, SCAN_ORIGIN_Y + 22), LCD_BLUE);
-        FONT_Write(FONT_FRAN, TextColor, BackGrColor, SCAN_ORIGIN_X - 20, SCAN_ORIGIN_Y - 35, "VSWR (1.0 ... 12.0), F +/- 500 KHz, step 10:");
+        FONT_Write(FONT_FRAN, TextColor, BackGrColor, SCAN_ORIGIN_X - 20, SCAN_ORIGIN_Y - 30, "VSWR (1.0 ... 12.0), F +/- 500 KHz, step 10:");
         ShowF();
         if (-1 == OSL_GetSelected())
         {
@@ -542,21 +612,21 @@ void Single_Frequency_Proc(void)
             OSL_CorrectZ(BAND_FMIN, 0+0*I); //To force lazy loading OSL file if it has not been loaded yet
             if (OSL_IsSelectedValid())
             {
-                FONT_Print(FONT_FRAN, Color1, BackGrColor, 380, 54, "OSL: %s, OK", OSL_GetSelectedName());// WK
+                FONT_Print(FONT_FRAN, Color1, BackGrColor, 385, 54, "OSL: %s, OK", OSL_GetSelectedName());// WK
             }
             else
             {
-                FONT_Print(FONT_FRAN, LCD_YELLOW, BackGrColor, 380, 54, "OSL: %s, BAD", OSL_GetSelectedName());// WK
+                FONT_Print(FONT_FRAN, LCD_YELLOW, BackGrColor, 385, 54, "OSL: %s, BAD", OSL_GetSelectedName());// WK
             }
         }
 
         if (OSL_IsErrCorrLoaded())
         {
-            FONT_Write(FONT_FRAN, Color1, BackGrColor, 380, 70, "HW cal: OK");// WK
+            FONT_Write(FONT_FRAN, Color1, BackGrColor, 385, 70, "HW cal: OK");// WK
         }
         else
         {
-            FONT_Write(FONT_FRAN, LCD_RED, BackGrColor, 380, 70, "HW cal: NO");// WK
+            FONT_Write(FONT_FRAN, LCD_RED, BackGrColor, 385, 70, "HW cal: NO");// WK
         }
         f_mess=CFG_GetParam(CFG_PARAM_MEAS_F);
         GEN_SetMeasurementFreq(f_mess);
@@ -634,20 +704,20 @@ void Single_Frequency_Proc(void)
                 InitScan500();
                 rx=rx0;
             }
-            //if (DSP_MeasuredMagVmv() < 1.)
-            if (DSP_MeasuredMagVmv() < 0.3f)
+
+            if (DSP_MeasuredMagVmv() < 1.)
             {
-                FONT_Write(FONT_FRAN, LCD_RED, BackGrColor, 380, 38, "No signal  ");// WK
+                FONT_Write(FONT_FRAN, LCD_RED, BackGrColor, 385, 38, "No signal  ");// WK
             }
             else
             {
-                FONT_Write(FONT_FRAN, Color1, BackGrColor, 380, 38, "Signal OK  ");// WK
+                FONT_Write(FONT_FRAN, Color1, BackGrColor, 385, 38, "Signal OK  ");// WK
             }
 
             if(!isMatch)
-                FONT_Write(FONT_FRAN, TextColor, BackGrColor, 292, 66, "LC match      ");
+                FONT_Write(FONT_FRAN, TextColor, BackGrColor, 290, 60, "LC match      ");
             else {
-                FONT_Write(FONT_FRAN, TextColor, BackGrColor, 292, 66, "Smith diagram ");
+                FONT_Write(FONT_FRAN, TextColor, BackGrColor, 290, 60, "Smith diagram ");
                 MeasureFrequency();
             }
             uint32_t speedcnt = 0;

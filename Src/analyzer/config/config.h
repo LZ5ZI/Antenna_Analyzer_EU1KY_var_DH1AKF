@@ -99,6 +99,7 @@ const char *g_aa_dir;
 
 extern  uint8_t ColourSelection;
 extern  bool FatLines;
+extern  int BeepOn1;
 extern  uint32_t BackGrColor;
 extern  uint32_t CurvColor;
 extern  uint32_t TextColor;
@@ -113,6 +114,5 @@ uint32_t CFG_GetParam(CFG_PARAM_t param);
 void CFG_SetParam(CFG_PARAM_t param, uint32_t value);
 void CFG_Flush(void);
 void CFG_ParamWnd(void);
-int BeepIsOn;
 
 #endif // _CONFIG_H_

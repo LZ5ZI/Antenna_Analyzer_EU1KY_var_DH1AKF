@@ -7,15 +7,14 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <math.h>       /* atan2 */
+#define PI 3.14159265
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <math.h>
 #include <complex.h>
-#include <string.h>
-
 #include "LCD.h"
-#include "main.h"
 #include "touch.h"
 #include "font.h"
 #include "config.h"
@@ -30,8 +29,11 @@
 #include "panfreq.h"
 #include "smith.h"
 #include "textbox.h"
+#include "measurement.h"
 #include "generator.h"
-#include "BeepTimer.h"
+#include "FreqCounter.h"
+
+#define PI 3.14159265
 
 #define X0 51
 #define Y0 18
@@ -48,8 +50,8 @@
 #define SMITH_CIRCLE_BG LCD_BLACK
 #define SMITH_LINE_FG LCD_GREEN
 
-//#define MAX(a,b) (((a)>(b))?(a):(b))
-//#define MIN(a,b) (((a)<(b))?(a):(b))
+#define MAX(a,b) (((a)>(b))?(a):(b))
+#define MIN(a,b) (((a)<(b))?(a):(b))
 
 // Please read the article why smoothing looks beautiful but actually
 // decreases precision, and averaging increases precision though looks ugly:
@@ -62,8 +64,7 @@
 #define SMOOTHOFS_HI (SMOOTHWINDOW_HI/2)
 #define SM_INTENSITY 64
 extern uint8_t rqDel;
-extern void ShowF(void);
-void  DrawFootText(void);
+//extern void ShowF(void);
 
 typedef enum
 {
@@ -76,18 +77,10 @@ typedef enum
     uint32_t fhi;
 } HAM_BANDS;
 */
-
-// Highligtht IARU regions   29.01.2020 DH1AKF
-#define region 1
-
-#if region==1
 static const HAM_BANDS hamBands[] =
 {
-    {135ul,   138ul},
-    {472ul,   479ul},
-    {1810ul,  2000ul},
+    {1800ul,  2000ul},
     {3500ul,  3800ul},
-    {5351ul,  5366ul},
     {7000ul,  7200ul},
     {10100ul, 10150ul},
     {14000ul, 14350ul},
@@ -99,181 +92,142 @@ static const HAM_BANDS hamBands[] =
     {144000ul, 146000ul},
     {222000ul, 225000ul},
     {430000ul, 440000ul},
-    {1240000ul, 1300000ul},
-
 };
-#endif
-
-#if region==2
-static const HAM_BANDS hamBands[] =
-{
-    {135ul,   138ul},
-    {472ul,   479ul},
-    {1800ul,  2000ul},
-    {3500ul,  4000ul},
-    {5351ul,  5366ul},
-    {7000ul,  7300ul},
-    {10100ul, 10150ul},
-    {14000ul, 14350ul},
-    {18068ul, 18168ul},
-    {21000ul, 21450ul},
-    {24890ul, 24990ul},
-    {28000ul, 29700ul},
-    {50000ul, 54000ul},
-    {144000ul, 148000ul},
-    {222000ul, 225000ul},
-    {430000ul, 450000ul},
-    {902000ul, 928000ul},
-    {1240000ul, 1300000ul},
-};
-#endif
-
-#if region==3
-static const HAM_BANDS hamBands[] =
-{
-    {135ul,   138ul},
-    {472ul,   479ul},
-    {1800ul,  2000ul},
-    {3500ul,  3900ul},
-    {7000ul,  7300ul},
-    {10100ul, 10150ul},
-    {14000ul, 14350ul},
-    {18068ul, 18168ul},
-    {21000ul, 21450ul},
-    {24890ul, 24990ul},
-    {28000ul, 29700ul},
-    {50000ul, 54000ul},
-    {144000ul, 148000ul},
-    {430000ul, 450000ul},
-    {1240000ul, 1300000ul},
-};
-#endif
-
-
+uint8_t Q_Fs_find=0;
 static const uint32_t hamBandsNum = sizeof(hamBands) / sizeof(*hamBands);
 static const uint32_t cx0 = 240; //Smith chart center
 static const uint32_t cy0 = 120; //Smith chart center
 static const int32_t smithradius = 100;
 static const char *modstr = "EU1KY AA v." AAVERSION " ";
+char str[100]="";
 
 static uint32_t modstrw = 0;
-// ** WK ** / DL8MBY:
+// ** WK ** :
+const char* BSSTR[] = {"1 kHz","2 kHz","4 kHz","10 kHz","20 kHz","40 kHz","100 kHz","200 kHz", "400 kHz", "1000 kHz", "2 MHz", "4 MHz", "10 MHz", "20 MHz", "30 MHz", "40 MHz", "100 MHz"};
+const char* BSSTR_HALF[] = {"0.5 kHz","1 kHz","2 kHz","5 kHz","10 kHz","20 kHz","50 kHz","100 kHz", "200 kHz", "500 kHz", "1 MHz", "2 MHz", "5 MHz", "10 MHz", "15 MHz", "20 MHz", "50 MHz"};
+const uint32_t BSVALUES[] = {1,2,4,10,20,40,100,200, 400, 1000, 2000, 4000, 10000, 20000, 30000, 40000, 100000};
 
-const char* BSSTR[] = {"2 kHz","4 kHz","10 kHz","20 kHz","40 kHz","100 kHz",\
-"200 kHz", "400 kHz", "1000 kHz", "2 MHz", "4 MHz", "10 MHz", "20 MHz",\
- "30 MHz", "40 MHz", "100 MHz", "200 MHz", "250 Mhz", "300 MHz",\
-"350 MHz", "400 MHz", "450 MHz", "500 MHz"};
-const char* BSSTR_HALF[] = {"1 kHz","2 kHz","5 kHz","10 kHz","20 kHz",\
-"50 kHz","100 kHz", "200 kHz", "500 kHz", "1 MHz", "2 MHz", "5 MHz",\
- "10 MHz", "15 MHz", "20 MHz", "50 MHz", "100 MHz", "125 MHz", "150 MHz",\
- "175 MHz", "200 MHz", "225 MHz", "250 MHz"};
-const uint32_t BSVALUES[] = {2,4,10,20,40,100,200, 400, 1000, 2000,\
-4000, 10000, 20000, 30000, 40000, 100000, 200000, 250000, 300000,\
-350000, 400000, 450000, 500000};
-
-/*const char* BSSTR[] = {
-    "2 kHz","4 kHz","10 kHz","20 kHz","40 kHz","100 kHz","200 kHz", "400 kHz", "1000 kHz", "2 MHz", "4 MHz", "10 MHz", "20 MHz", "30 MHz", "40 MHz", "100 MHz"};
-const char* BSSTR_HALF[] = {"1 kHz","2 kHz","5 kHz","10 kHz","20 kHz","50 kHz","100 kHz", "200 kHz", "500 kHz", "1 MHz", "2 MHz", "5 MHz", "10 MHz", "15 MHz", "20 MHz", "50 MHz"};
-const uint32_t BSVALUES[] = {2,4,10,20,40,100,200, 400, 1000, 2000, 4000, 10000, 20000, 30000, 40000, 100000};
-*/
 
 static uint32_t f1 = 14000000; //Scan range start frequency, in Hz
 static BANDSPAN span = BS400;
 static float fcur;// frequency at cursor position in kHz
-static char buf[64];
+static char buf[100];
 static LCDPoint pt;
 static float complex values[WWIDTH+1];
-static float complex SavedValues1[WWIDTH+1];
-static float complex SavedValues2[WWIDTH+1];
-static float complex SavedValues3[WWIDTH+1];
-static int isStored;
 static int isMeasured = 0;
 static uint32_t cursorPos = WWIDTH / 2;
 static GRAPHTYPE grType = GRAPH_VSWR;
 static uint32_t isSaved = 0;
 static uint32_t cursorChangeCount = 0;
 static uint32_t autofast = 0;
-static uint32_t firstRun = 0;// calculate scale only once
-static float minS11, factorA, factorB;
 static int loglog=0;// scale for SWR
 extern volatile uint32_t autosleep_timer;
 
-static void DrawRX();
+//static void DrawRX();
+static void DrawRX(int SelQu, int SelEqu);
+
 static void DrawSmith();
 static float complex SmoothRX(int idx, int useHighSmooth);
 static TEXTBOX_t SWR_ctx;
-static TEXTBOX_CTX_t SWR1;
 void SWR_Exit(void);
 static void SWR_2(void);
 void SWR_Mute(void);
 static void SWR_3(void);
 void SWR_SetFrequency(void);
-void SWR_SetFrequencyMuted(void);
+uint32_t QuFindPositivX(BANDSPAN bs);
+
+void QuSaveFile(void);
+void QuSetFequency(void);
 void QuMeasure(void);
 void QuCalibrate(void);
+void C0Calibrate(void);
+void CxMeasure(void);
 void DrawX_Scale(float maxRXi, float minRXi);
+static void ShowMeasFr(void);
+
 int sFreq, sCalib;
 
 #define M_BGCOLOR LCD_RGB(0,0,64)    //Menu item background color
 #define M_FGCOLOR LCD_RGB(255,255,0) //Menu item foreground color
 
+////////////////////////////////////////////////////////////////
+static const TEXTBOX_t tb_menuMeasCx[] = {
+    (TEXTBOX_t){.x0 = 309, .y0 = 231, .text =   "Calibrate Co", .font = FONT_FRANBIG,.width = 170, .height = 40, .center = 1,
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR,   .cb = C0Calibrate ,             .cbparam = 1,.next = (void*)&tb_menuMeasCx[1] },
 
-static const TEXTBOX_t tb_menuQuartz[] = {
-    (TEXTBOX_t){.x0 = 10, .y0 = 180, .text =    "Set Frequency", .font = FONT_FRANBIG,.width = 180, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = SWR_SetFrequency , .cbparam = 1, .next = (void*)&tb_menuQuartz[1] },
-    (TEXTBOX_t){.x0 = 200, .y0 = 180, .text =   "Calibrate OPEN", .font = FONT_FRANBIG,.width = 220, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = QuCalibrate , .cbparam = 1, .next = (void*)&tb_menuQuartz[2] },
-    (TEXTBOX_t){.x0 = 80, .y0 = 230, .text =  "Start", .font = FONT_FRANBIG,.width = 100, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = QuMeasure , .cbparam = 1, .next = (void*)&tb_menuQuartz[3] },
-    (TEXTBOX_t){ .x0 = 0, .y0 = 230, .text = "Exit", .font = FONT_FRANBIG, .width = 70, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = LCD_RED, .cb = (void(*)(void))SWR_Exit, .cbparam = 1,},
+    (TEXTBOX_t){.x0 =   0, .y0 =   0, .text = "-500kHz",        .font = FONT_FRANBIG,.width =  110, .height = 40, .center = 1,
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR,   .cb = MEASUREMENT_FDecr_500k , .cbparam = 1, .next = (void*)&tb_menuMeasCx[2] },
+
+    (TEXTBOX_t){.x0 = 369, .y0 =   0, .text = "+500kHz",        .font = FONT_FRANBIG,.width =  110, .height = 40, .center = 1,
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR,   .cb = MEASUREMENT_FIncr_500k , .cbparam = 1, .next = (void*)&tb_menuMeasCx[3] },
+
+    (TEXTBOX_t){.x0 = 90, .y0 = 231, .text =    "Set Frequency", .font = FONT_FRANBIG,.width = 180, .height = 40, .center = 1,
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR,   .cb = QuSetFequency , .cbparam = 1, .next = (void*)&tb_menuMeasCx[4] },
+
+     (TEXTBOX_t){.x0 = 0, .y0 = 231, .text = "Exit"   ,        .font = FONT_FRANBIG, .width = 70, .height = 40, .center = 1,
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = LCD_RED,     .cb = (void(*)(void))SWR_Exit, .cbparam = 1,},
 };
+
+
+//////////////////////////////////////////////////////////////////
+static const TEXTBOX_t tb_menuQuartz[] = {
+/*    (TEXTBOX_t){.x0 = 290, .y0 = 237, .text =    "Set Frequency", .font = FONT_FRANBIG,.width = 180, .height = 34, .center = 1,
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR,   .cb = QuSetFequency , .cbparam = 1, .next = (void*)&tb_menuQuartz[1] },
+*/
+    (TEXTBOX_t){.x0 = 200, .y0 = 180, .text =   "Calibrate OPEN", .font = FONT_FRANBIG,.width = 220, .height = 34, .center = 1,
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR,   .cb = QuCalibrate , .cbparam = 1,     .next = (void*)&tb_menuQuartz[1] },
+
+    (TEXTBOX_t){.x0 = 80, .y0 = 237, .text =  "Start", .font = FONT_FRANBIG,.width = 100, .height = 34, .center = 1,
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR,   .cb = QuMeasure , .cbparam = 1, .next = (void*)&tb_menuQuartz[2] },
+
+    (TEXTBOX_t){ .x0 = 1, .y0 = 237, .text = "Exit", .font = FONT_FRANBIG, .width = 70, .height = 34, .center = 1,
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = LCD_RED,     .cb = (void(*)(void))SWR_Exit, .cbparam = 1,},
+};
+
 
 static const TEXTBOX_t tb_menuQuartz2[] = {
 
-    (TEXTBOX_t){.x0 = 270, .y0 = 230, .text =  "Start", .font = FONT_FRANBIG,.width = 100, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = QuMeasure , .cbparam = 1, .next = (void*)&tb_menuQuartz2[1] },
-    (TEXTBOX_t){.x0 = 80, .y0 = 230, .text =    "Set Frequency", .font = FONT_FRANBIG,.width = 180, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = SWR_SetFrequency , .cbparam = 1, .next = (void*)&tb_menuQuartz2[2] },
-    (TEXTBOX_t){ .x0 = 0, .y0 = 230, .text = "Exit", .font = FONT_FRANBIG, .width = 70, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = LCD_RED, .cb = (void(*)(void))SWR_Exit, .cbparam = 1,},
+    (TEXTBOX_t){.x0 = 80, .y0 = 237, .text =  "Start", .font = FONT_FRANBIG,.width = 100, .height = 34, .center = 1,
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = QuMeasure , .cbparam = 1, .next = (void*)&tb_menuQuartz2[1] },
+    (TEXTBOX_t){.x0 = 290, .y0 = 237, .text =    "Set Frequency", .font = FONT_FRANBIG,.width = 180, .height = 34, .center = 1,
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR,   .cb = QuSetFequency , .cbparam = 1, .next = (void*)&tb_menuQuartz2[2] },
+    (TEXTBOX_t){.x0 = 359, .y0 = 0, .text =  "Save File", .font = FONT_FRANBIG,.width = 120, .height = 34, .center = 1,
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR,   .cb = QuSaveFile , .cbparam = 1, .next = (void*)&tb_menuQuartz2[3] },
+    (TEXTBOX_t){ .x0 = 0, .y0 = 237, .text = "Exit", .font = FONT_FRANBIG, .width = 70, .height = 34, .center = 1,
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = LCD_RED, .cb = (void(*)(void))SWR_Exit, .cbparam = 1,},
 };
 
 
 static const TEXTBOX_t tb_menuSWR[] = {
     (TEXTBOX_t){.x0 = 70, .y0 = 210, .text =    "Frequency", .font = FONT_FRANBIG,.width = 120, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = SWR_SetFrequencyMuted , .cbparam = 1, .next = (void*)&tb_menuSWR[1] },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = SWR_SetFrequency , .cbparam = 1, .next = (void*)&tb_menuSWR[1] },
    (TEXTBOX_t){.x0 = 280, .y0 = 210, .text =  "SWR_2", .font = FONT_FRANBIG,.width = 100, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = SWR_2 , .cbparam = 1, .next = (void*)&tb_menuSWR[2] },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = SWR_2 , .cbparam = 1, .next = (void*)&tb_menuSWR[2] },
     (TEXTBOX_t){.x0 = 380, .y0 = 210, .text =  "SWR_3", .font = FONT_FRANBIG,.width = 96, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = SWR_3 , .cbparam = 1, .next = (void*)&tb_menuSWR[3] },
-    (TEXTBOX_t){.x0 = 190, .y0 = 210, .text =  "Mute", .font = FONT_FRANBIG,.width = 90, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = SWR_Mute , .cbparam = 1, .next = (void*)&tb_menuSWR[4] },
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = SWR_3 , .cbparam = 1, .next = (void*)&tb_menuSWR[3] },
+    (TEXTBOX_t){.x0 = 190, .y0 = 210, .text =  "Tone", .font = FONT_FRANBIG,.width = 90, .height = 34, .center = 1,
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = SWR_Mute , .cbparam = 1, .next = (void*)&tb_menuSWR[4] },
     (TEXTBOX_t){ .x0 = 0, .y0 = 210, .text = "Exit", .font = FONT_FRANBIG, .width = 70, .height = 34, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = LCD_RED, .cb = (void(*)(void))SWR_Exit, .cbparam = 1,},
+                 .border = TEXTBOX_BORDER_BUTTON, .fgcolor = M_FGCOLOR, .bgcolor = LCD_RED, .cb = (void(*)(void))SWR_Exit, .cbparam = 1,},
 };
 
 static uint32_t multi_fr[5]  = {1850,21200,27800,3670,7150};//Multi SWR frequencies in kHz
 static uint32_t multi_bw[5]  = {200,1000,200,400,100};//Multi SWR bandwidth in kHz
 static BANDSPAN multi_bwNo[5]  = {6,8,6,5,4};//Multi SWR bandwidth number
-static int BeepIsActive;
+static int beep;
 
 void Beep(int duration){
-    if(BeepIsOn==0) return;
-    if(SWRTone==1) return;// SWR Audio against beep
-    //if(BeepIsActive==0){
-        BeepIsActive=1;// make beep audible
+    if (BeepOn1==0) return;
+    if(beep==0){
+        beep=1;
+        AUDIO1=1;
         UB_TIMER2_Init_FRQ(880);
         UB_TIMER2_Start();
         Sleep(100);
-        UB_TIMER2_Stop();
-    //}
-    BeepIsActive=0;// no sound
-
-    //if(duration==1) {
-      //  UB_TIMER2_Stop();
-        //BeepIsActive=0;// beep not audible
-    //}
+        AUDIO1=0;
+       // UB_TIMER2_Stop();
+    }
+    if(duration==1) beep=0;
 }
 
 unsigned long GetUpper(int i){
@@ -287,7 +241,15 @@ if((i>=0)&&(i<=12))
 return 0;
 }
 
-
+void DrawFootText(void){
+    FONT_Write(FONT_FRANBIG, CurvColor, BackGrColor, 2, 244, "Exit");
+    LCD_Rectangle(LCD_MakePoint(0,249),LCD_MakePoint(60,270),CurvColor);
+    FONT_Write(FONT_FRAN, CurvColor, BackGrColor, 81, 251, "- Zoom +");
+    LCD_Rectangle(LCD_MakePoint(70,249),LCD_MakePoint(104,270),CurvColor);
+    LCD_Rectangle(LCD_MakePoint(70,249),LCD_MakePoint(138,270),CurvColor);
+    FONT_Write(FONT_FRANBIG, CurvColor, BackGrColor, 420, 244, "Scan");
+    LCD_Rectangle(LCD_MakePoint(410,249),LCD_MakePoint(478,270),CurvColor);
+}
 
 
 int GetBandNr(unsigned long freq){
@@ -451,7 +413,6 @@ static void DrawCursor()
     Sleep(5);
 
 }
-
 static void DrawCursorText()
 {
     float complex rx = values[cursorPos]; //SmoothRX(cursorPos, f1 > (CFG_GetParam(CFG_PARAM_BAND_FMAX) / 1000) ? 1 : 0);
@@ -467,25 +428,106 @@ static void DrawCursorText()
     if (fcur * 1000.f > (float)(CFG_GetParam(CFG_PARAM_BAND_FMAX) + 1))
         fcur = 0.f;
 
+/*
     float Q = 0.f;
     if ((crealf(rx) > 0.1f) && (fabs(cimagf(rx)) > crealf(rx)))
         Q = fabs(cimagf(rx) / crealf(rx));
     if (Q > 2000.f)
         Q = 2000.f;
-    LCD_FillRect(LCD_MakePoint(150, Y0 + WHEIGHT + 16),LCD_MakePoint(409 , Y0 + WHEIGHT + 30),BackGrColor);
-    FONT_Print(FONT_FRAN, TextColor, BackGrColor, 60, Y0 + WHEIGHT + 16, "F: %.3f   Z: %.1f%+.1fj   SWR: %.1f   MCL: %.2f dB   Q: %.1f       ",
+*/
+    float Q = 0.0;
+    if ((crealf(rx) != 0.0)&&(cimagf(rx)>0.0))
+        Q = cimagf(rx) / fabs(crealf(rx));
+    if (Q > 2000.0)
+        Q = 2000.0;
+    DrawFootText();
+
+    LCD_FillRect(LCD_MakePoint(0, 234),LCD_MakePoint(478, 248),BackGrColor);
+    FONT_Print(FONT_FRAN, TextColor, BackGrColor ,0 , 234, "F: %.3f   Z: %.1f%+.1fj  %.1f°",
+               fcur,
+               crealf(rx),
+               cimagf(rx),atan2(cimagf(rx),crealf(rx))*180.0/PI);
+
+    FONT_Print(FONT_FRAN, TextColor, BackGrColor ,240 , 234, "SWR: %.2f    MCL: %.2f dB",
+               DSP_CalcVSWR(rx),
+               (ga > 0.01f) ? (-10. * log10f(ga)) : 99.f); // Matched cable loss
+
+    FONT_Print(FONT_FRAN, TextColor, BackGrColor ,420 , 234, "Q: %.1f", Q);
+
+    LCD_HLine(LCD_MakePoint(0,249), 62, CurvColor);
+    LCD_HLine(LCD_MakePoint(70,249), 70, CurvColor);
+    LCD_HLine(LCD_MakePoint(410,249), 69, CurvColor);
+}
+
+
+static void DrawCursorText1()
+{
+    float complex rx = values[cursorPos]; //SmoothRX(cursorPos, f1 > (CFG_GetParam(CFG_PARAM_BAND_FMAX) / 1000) ? 1 : 0);
+    float ga = cabsf(OSL_GFromZ(rx, (float)CFG_GetParam(CFG_PARAM_R0))); //G magnitude
+    float vswr,x,r;
+
+    uint32_t fstart;
+    if (CFG_GetParam(CFG_PARAM_PAN_CENTER_F) == 0)
+        fstart = f1;
+    else
+        fstart = f1 - 500*BSVALUES[span];
+
+    fcur = ((float)(fstart/1000. + (float)cursorPos * BSVALUES[span] / WWIDTH));///1000.;
+    if (fcur * 1000.f > (float)(CFG_GetParam(CFG_PARAM_BAND_FMAX) + 1))
+        fcur = 0.f;
+
+    float Q = 0.0;
+    if ((crealf(rx) != 0.0) )
+        Q = fabs(cimagf(rx)) / fabs(crealf(rx));
+    if (Q > 2000.0)
+        Q = 2000.0;
+    vswr=DSP_CalcVSWR(rx);
+    r=crealf(rx);
+    x=cimagf(rx);
+    //LCD_FillRect(LCD_MakePoint(0, Y0 + WHEIGHT + 16),LCD_MakePoint(479 , Y0 + WHEIGHT + 30),BackGrColor);
+    LCD_FillRect(LCD_MakePoint(0, 234),LCD_MakePoint(478, 248),BackGrColor);
+
+    sprintf(str,"F: %.3f  Z: %.1f%+.1fj",
+               fcur,
+               r,
+               x);
+    FONT_Write(FONT_FRAN, TextColor, BackGrColor, 0, 234, str);
+
+
+    sprintf(str,"SWR: %.1f  MCL: %.2f dB",
+               vswr,
+               (ga > 0.01f) ? (-10. * log10f(ga)) : 99.f
+               );
+    FONT_Write(FONT_FRAN, TextColor, BackGrColor, 240, 234, str);
+
+    sprintf(str,"Q:%.1f",Q);
+    FONT_Write(FONT_FRAN, TextColor, BackGrColor, 420, 234, str);
+
+ /*   charnum=sprintf(str,"F: %.3f  Z: %.1f%+.1fj  SWR: %.1f  MCL: %.2f dB  Q: %.1f",
+               fcur,
+               r,
+               x,
+               vswr,
+               (ga > 0.01f) ? (-10. * log10f(ga)) : 99.f, // Matched cable loss
+               Q);
+
+               if(charnum>72)
+                   while(1);
+*/
+
+   /*   FONT_Print(FONT_FRAN, TextColor, BackGrColor, 0, Y0 + WHEIGHT + 16, "F: %.3f  Z: %.1f%+.1fj  SWR: %.1f  MCL: %.2f dB  Q: %.1f",
                fcur,
                crealf(rx),
                cimagf(rx),
                DSP_CalcVSWR(rx),
                (ga > 0.01f) ? (-10. * log10f(ga)) : 99.f, // Matched cable loss
                Q
-              );
-   /* LCD_HLine(LCD_MakePoint(0,249), 62, CurvColor);
-    LCD_HLine(LCD_MakePoint(70,249), 70, CurvColor);
-    LCD_HLine(LCD_MakePoint(410,249), 69, CurvColor);*/
-}
+              );*/
 
+  //  LCD_HLine(LCD_MakePoint(0,249), 62, CurvColor);
+  //  LCD_HLine(LCD_MakePoint(70,249), 70, CurvColor);
+  //  LCD_HLine(LCD_MakePoint(410,249), 69, CurvColor);
+}
 static void DrawCursorTextWithS11()
 {
     float complex rx = values[cursorPos]; //SmoothRX(cursorPos, f1 > (CFG_GetParam(CFG_PARAM_BAND_FMAX) / 1000) ? 1 : 0);
@@ -500,34 +542,102 @@ static void DrawCursorTextWithS11()
     fcur = ((float)(fstart/1000. + (float)cursorPos * BSVALUES[span] / WWIDTH));///1000.;
     if (fcur * 1000.f > (float)(CFG_GetParam(CFG_PARAM_BAND_FMAX) + 1))
         fcur = 0.f;
-    LCD_FillRect(LCD_MakePoint(150, Y0 + WHEIGHT + 16),LCD_MakePoint(409 , Y0 + WHEIGHT + 30),BackGrColor);
-    FONT_Print(FONT_FRAN, TextColor, BackGrColor, 60, Y0 + WHEIGHT + 16, "F: %.3f   Z: %.1f%+.1fj   SWR: %.1f   S11: %.2f dB          ",
+    LCD_FillRect(LCD_MakePoint(0, 234),LCD_MakePoint(478, 248),BackGrColor);
+    DrawFootText();
+    FONT_Print(FONT_FRAN, TextColor, BackGrColor ,0 , 234, "F: %.3f   Z: %.1f%+.1fj",
+                fcur,
+                crealf(rx),
+                cimagf(rx)
+                );
+
+    FONT_Print(FONT_FRAN, TextColor, BackGrColor ,240 , 234, "SWR: %.1f",
+                DSP_CalcVSWR(rx)
+                );
+
+    FONT_Print(FONT_FRAN, TextColor, BackGrColor ,380 , 234, "MCL: %.2f dB",
+                S11Calc(DSP_CalcVSWR(rx))
+                );
+ /*
+    FONT_Print(FONT_FRAN, TextColor, BackGrColor,0,234, "F: %.3f  Z: %.1f%+.1fj  SWR: %.1f  S11: %.2f dB",
                fcur,
                crealf(rx),
                cimagf(rx),
                DSP_CalcVSWR(rx),
                S11Calc(DSP_CalcVSWR(rx))
               );
-   /* LCD_HLine(LCD_MakePoint(0,249), 62, CurvColor);
+ */
+
+    LCD_HLine(LCD_MakePoint(0,249), 62, CurvColor);
     LCD_HLine(LCD_MakePoint(70,249), 70, CurvColor);
-    LCD_HLine(LCD_MakePoint(410,249), 69, CurvColor);*/
+    LCD_HLine(LCD_MakePoint(410,249), 69, CurvColor);
+}
+
+static void DrawCursorTextWithS111()
+{
+    float complex rx = values[cursorPos]; //SmoothRX(cursorPos, f1 > (CFG_GetParam(CFG_PARAM_BAND_FMAX) / 1000) ? 1 : 0);
+   // float ga = cabsf(OSL_GFromZ(rx, (float)CFG_GetParam(CFG_PARAM_R0))); //G magnitude
+    uint32_t fstart;
+    if (CFG_GetParam(CFG_PARAM_PAN_CENTER_F) == 0)
+        fstart = f1;
+    else
+        fstart = f1 - 500*BSVALUES[span];// / 2;
+
+    fcur = ((float)(fstart/1000. + (float)cursorPos * BSVALUES[span] / WWIDTH));///1000.;
+    if (fcur * 1000.f > (float)(CFG_GetParam(CFG_PARAM_BAND_FMAX) + 1))
+        fcur = 0.f;
+    //LCD_FillRect(LCD_MakePoint(0, Y0 + WHEIGHT + 16),LCD_MakePoint(479 , Y0 + WHEIGHT + 30),BackGrColor);
+    LCD_FillRect(LCD_MakePoint(0, 234),LCD_MakePoint(478 , 249),BackGrColor);
+
+    sprintf(str,"F: %.3f  Z: %.1f%+.1fj",
+               fcur,
+               crealf(rx),
+               cimagf(rx));
+    FONT_Write(FONT_FRAN, TextColor, BackGrColor, 0, 234, str);
+
+
+    sprintf(str,"SWR: %.1f  S11: %.2f dB",
+               DSP_CalcVSWR(rx),
+               S11Calc(DSP_CalcVSWR(rx)));
+    FONT_Write(FONT_FRAN, TextColor, BackGrColor, 240, 234, str);
+
+    /*
+    sprintf(str,"F: %.3f Z: %.1f%+.1fj  SWR: %.1f  S11: %.2f dB",
+               fcur,
+               crealf(rx),
+               cimagf(rx),
+               DSP_CalcVSWR(rx),
+               S11Calc(DSP_CalcVSWR(rx))
+              );
+    FONT_Write(FONT_FRAN, TextColor, BackGrColor, 0, 234, str);
+    /*
+    FONT_Print(FONT_FRAN, TextColor, BackGrColor, 0, Y0 + WHEIGHT + 16, "F: %.3f Z: %.1f%+.1fj  SWR: %.1f  S11: %.2f dB",
+               fcur,
+               crealf(rx),
+               cimagf(rx),
+               DSP_CalcVSWR(rx),
+               S11Calc(DSP_CalcVSWR(rx))
+              );
+              */
+   // LCD_HLine(LCD_MakePoint(0,249), 62, CurvColor);
+   // LCD_HLine(LCD_MakePoint(70,249), 70, CurvColor);
+   // LCD_HLine(LCD_MakePoint(410,249), 69, CurvColor);
 }
 
 static void DrawAutoText(void)
 {
-   /* static const char* atxt = " Auto (fast, 1/8 pts)  ";
+    static const char* atxt = " Auto (fast, 1/8 pts)  ";
     if (0 == autofast)
         FONT_Print(FONT_FRAN, TextColor, BackGrColor, 260, Y0 + WHEIGHT + 16 + 16,  atxt);
     else
-        FONT_Print(FONT_FRAN, TextColor, LCD_MakeRGB(0, 128, 0), 260, Y0 + WHEIGHT + 16 + 16,  atxt);*/
+        FONT_Print(FONT_FRAN, TextColor, LCD_MakeRGB(0, 128, 0), 260, Y0 + WHEIGHT + 16 + 16,  atxt);
 }
 
 static void DrawBottomText(void)
 {
-   // static const char* txt = " Save snapshot ";
-   // FONT_Write(FONT_FRAN, TextColor, BackGrColor, 165,
-   //            Y0 + WHEIGHT + 16 + 16, txt);
-    DrawFootText();
+    static const char* txt = " Save snapshot ";
+    FONT_Write(FONT_FRAN, TextColor, BackGrColor, 165,
+               Y0 + WHEIGHT + 16 + 16, txt);
+    //DrawFootText();
 }
 
 static void DrawSavingText(void)
@@ -543,7 +653,6 @@ static void DrawSavedText(void)
     static const char* txt = "  Snapshot saved  ";
     FONT_Write(FONT_FRAN, LCD_WHITE, LCD_RGB(0, 60, 0), 165,
                Y0 + WHEIGHT + 16 + 16, txt);
-    Sleep(2000);
     DrawFootText();
     DrawAutoText();
 }
@@ -561,6 +670,7 @@ static void DecrCursor()
     {
         DrawCursorTextWithS11();
     }
+
 
     else
     {
@@ -600,8 +710,8 @@ static void DrawGrid(GRAPHTYPE grType)  //
     LCD_FillAll(BackGrColor);
 
     FONT_Write(FONT_FRAN, LCD_BLACK, LCD_PURPLE, X0+1, 0, modstr);
-    //FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 2, 110, "<");
-    //FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 460, 110, ">");
+    FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 2, 110, "<");
+    FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 460, 110, ">");
     uint32_t fstart;
     uint32_t pos = modstrw + 8+ X0;//WK
     if (grType == GRAPH_RX)// R/X
@@ -738,12 +848,12 @@ static void DrawGrid(GRAPHTYPE grType)  //
                 LCD_HLine(LCD_MakePoint(X0, WY(yofs)), WWIDTH, WGRIDCOLOR);
             }
         }
-        /*LCD_FillRect((LCDPoint){0 ,155},(LCDPoint){X0 -22,215},BackGrColor);
+        LCD_FillRect((LCDPoint){0 ,155},(LCDPoint){X0 -22,215},BackGrColor);
 
         LCD_Rectangle((LCDPoint){0 ,155},(LCDPoint){X0 -22,215},CurvColor);
         FONT_Write(FONT_FRAN, CurvColor, BackGrColor, 4, 160, "Log");
         if(loglog==1)
-            FONT_Write(FONT_FRAN, CurvColor, BackGrColor, 4, 190, "Log");*/
+            FONT_Write(FONT_FRAN, CurvColor, BackGrColor, 4, 190, "Log");
     }
     LCD_FillRect((LCDPoint){X0 ,Y0+WHEIGHT+1},(LCDPoint){X0 + WWIDTH+2,Y0+WHEIGHT+3},BackGrColor);
 }
@@ -807,12 +917,43 @@ static void ScanRXFast(void)
     }
 }
 
-static uint32_t Fs, Fp;// in Hz
-static float Cp, Rs;
+static uint32_t Fs, Fp,Fq1,Fq2;// in Hz
+static float phi1,phi,Cx,Cp,Lp,Rs,Cs,Ls,Ls1,Ls2,Q,XL1,XL2;
+//////////////
 
+static void ScanRX_ZI(void)
+{
+    uint64_t i;
+    uint32_t fstart;
+    if (CFG_GetParam(CFG_PARAM_PAN_CENTER_F) == 0)
+        fstart = f1;
+    else
+        fstart = f1 - 500*BSVALUES[span];
+   // fstart *= 1000; //Convert to Hz
+
+    DSP_Measure(fstart, 1, 1, 1); //Fake initial run to let the circuit stabilize
+    Sleep(20);
+    for(i = 0; i <= WWIDTH; i++)
+    {
+        uint32_t freq;
+        freq = fstart + (i * BSVALUES[span] * 1000) / WWIDTH;
+        if (freq == 0) //To overcome special case in DSP_Measure, where 0 is valid value
+            freq = 1;
+        DSP_Measure(freq, 1, 1, CFG_GetParam(CFG_PARAM_PAN_NSCANS));
+        float complex rx = DSP_MeasuredZ();
+        if (isnan(crealf(rx)) || isinf(crealf(rx)))
+            rx = 0.0f + cimagf(rx) * I;
+        if (isnan(cimagf(rx)) || isinf(cimagf(rx)))
+            rx = crealf(rx) + 0.0fi;
+        values[i] = rx;
+        LCD_SetPixel(LCD_MakePoint(X0 + i, 135), LCD_BLUE);// progress line
+    }
+    GEN_SetMeasurementFreq(0);
+    isMeasured = 1;
+}
 static void ScanRX(int selector)
 {
-char str[15];
+char str[100];
 float complex rx, rx0;
 float newX, oldX, MaxX, absX;
 uint32_t i, k, sel, imax;
@@ -825,25 +966,11 @@ uint32_t fstart, freq1, deltaF;
         fstart = f1 - 500*BSVALUES[span]; // 2;
     //fstart *= 1000; //Convert to Hz
 
-    freq1=fstart-150000;
+    freq1=fstart-100000;
     if(freq1<100000)freq1=100000;
     DSP_Measure(freq1, 1, 1, 3); //Fake initial run to let the circuit stabilize
     rx0 = DSP_MeasuredZ();
     Sleep(20);
-
-    DSP_Measure(freq1, 1, 1, 3);
-
-    rx0 = DSP_MeasuredZ();
-
-float r= fabsf(crealf(rx0));//calculate Cp (quartz)
-float im= cimagf(rx0);
-float xp=1.0f;
-    if(im*im>0.0025)
-
-        xp=im+r*(r/im);// else xp=im=-10000.0f;// ??
-
-    Cp=-1/( 6.2832 *freq1* xp);
-    if(selector==1)return;
 
     deltaF=(BSVALUES[span] * 1000) / WWIDTH;
     MaxX=0;
@@ -852,7 +979,7 @@ float xp=1.0f;
     for(i = 0; i <= WWIDTH; i++)
     {
         if(i%40==0){
-            FONT_Write(FONT_FRAN, LCD_BLACK, LCD_BLACK, 450, 0, "TS");// ??
+            FONT_Write(FONT_FRAN, LCD_RED, LCD_BLACK, 450, 0, "TS");
             Sleep(50);
         }
         Sleep(10);
@@ -879,7 +1006,7 @@ float xp=1.0f;
             absX=fabsf(newX);
             if((sel==0)&&(newX>=0)&&(oldX<0)){// serial frequency of a quartz
                 Fs=freq1;
-                Rs=crealf(rx);
+                //1Rs=crealf(rx);
                 sel=1;
             }
             else if ((sel==1)||(sel==2)){
@@ -896,7 +1023,7 @@ float xp=1.0f;
                 }
             }
         }
-        FONT_Write(FONT_FRAN, LCD_BLACK, LCD_BLACK, 450, 0, "dP");// ??
+        FONT_Write(FONT_FRAN, LCD_RED, LCD_BLACK, 450, 0, "dP");
         Sleep(10);
         values[i] = rx;
         oldX=newX;
@@ -904,6 +1031,112 @@ float xp=1.0f;
         LCD_SetPixel(LCD_MakePoint(X0 + i, 136), LCD_BLUE);
     }
     FONT_Write(FONT_FRAN, LCD_RED, LCD_BLACK, 420, 0, "     ");
+    GEN_SetMeasurementFreq(0);
+    isMeasured = 1;
+}
+
+
+static void ScanRX_QuFast(void)
+{
+char str[100];
+float complex rx, rx0;
+float impedance, newX, oldX, MaxX, absX;
+uint32_t i, k, sel, imax;
+uint32_t fstart, freq1, deltaF;
+/////////////////
+    fstart = f1;
+    freq1=fstart-100000;
+    if(freq1<100000)freq1=100000;
+
+
+    deltaF=(BSVALUES[span] * 1000) / WWIDTH;
+    MaxX=0;
+    sel=0;
+    k=CFG_GetParam(CFG_PARAM_PAN_NSCANS);
+
+    for(i = 0; i <= WWIDTH; i+=8)
+    {
+        uint32_t freq;
+        fstart = f1;
+
+        freq = fstart + (i * BSVALUES[span] * 1000) / WWIDTH;
+        if (freq == 0) //To overcome special case in DSP_Measure, where 0 is valid value
+            freq = 1;
+        DSP_Measure(freq, 1, 1, CFG_GetParam(CFG_PARAM_PAN_NSCANS));
+        float complex rx = DSP_MeasuredZ();
+
+        if (isnan(crealf(rx)) || isinf(crealf(rx)))
+            rx = 0.0f + cimagf(rx) * I;
+        if (isnan(cimagf(rx)) || isinf(cimagf(rx)))
+            rx = crealf(rx) + 0.0fi;
+
+        values[i] = rx;
+    }
+    GEN_SetMeasurementFreq(0);
+    isMeasured = 1;
+
+    //Interpolate intermediate values
+    for(i = 0; i <= WWIDTH; i++)
+    {
+        uint32_t fr = i % 8;
+        if (0 == fr)
+            continue;
+        int fi0, fi1, fi2;
+        if (i < 8)
+        {
+            fi0 = i - fr;
+            fi1 = i + 8 - fr;
+            fi2 = i + 16 - fr;
+        }
+        else
+        {
+            fi0 = i - 8 - fr;
+            fi1 = i - fr;
+            fi2 = i + (8 - fr);
+        }
+        float complex G0 = OSL_GFromZ(values[fi0], 50.f);
+        float complex G1 = OSL_GFromZ(values[fi1], 50.f);
+        float complex G2 = OSL_GFromZ(values[fi2], 50.f);
+        float complex Gi = OSL_ParabolicInterpolation(G0, G1, G2, (float)fi0, (float)fi1, (float)fi2, (float)i);
+        values[i] = OSL_ZFromG(Gi, 50.f);
+    }
+//
+    for(i = 0; i <= WWIDTH; i++)
+    {
+        rx = values[i];
+        freq1 = fstart + (i * BSVALUES[span] * 1000) / WWIDTH;
+
+        if (isnan(crealf(rx)) || isinf(crealf(rx)))
+            {
+            if(i>0) rx = crealf(values[i-1]) + cimagf(rx) * I;
+            else rx = 0.0f + cimagf(rx) * I;
+            }
+        if (isnan(cimagf(rx)) || isinf(cimagf(rx)))
+            {
+            if(i>0) rx = crealf(rx) + cimagf(values[i-1]) * I;
+            else rx = crealf(rx) + 99999.0f * I;
+            }
+            impedance = cimagf(rx)*cimagf(rx)+crealf(rx)*crealf(rx);
+            impedance=sqrtf(impedance);
+            newX=cimagf(rx);
+            //absX=fabsf(newX);
+            if((sel==1)&&(newX<=0)&&(oldX>0)&&(impedance>500))
+            {// parallel frequency of a quartz
+                Fp=freq1;
+                //sel=0;
+            }
+
+            if((sel==0)&&(newX>=0)&&(oldX<0))
+            {// serial frequency of a quartz
+                Fs=freq1;
+                //2Rs=crealf(rx);
+                sel=1;
+                //i+=5;
+            }
+
+        oldX=newX;
+        LCD_SetPixel(LCD_MakePoint(X0 + i, 135), LCD_BLUE);// progress line
+    }
     GEN_SetMeasurementFreq(0);
     isMeasured = 1;
 }
@@ -947,11 +1180,8 @@ static float complex SmoothRX(int idx, int useHighSmooth)
 static uint32_t MinSWR;
 static uint32_t MinIndex;
 
-static void DrawVSWR(void)
+static void DrawVSWR1(void)
 {
-    FONT_Write(FONT_FRANBIG, CurvColor, BackGrColor, X0 -46, Y0-12, "S");
-    FONT_Write(FONT_FRANBIG, CurvColor, BackGrColor, X0 -50, Y0+18, "W");
-    FONT_Write(FONT_FRANBIG, CurvColor, BackGrColor, X0 -46, Y0+48, "R");
     if (!isMeasured)
         return;
     MinSWR=0;
@@ -998,6 +1228,9 @@ static void DrawVSWR(void)
         lastoffset = offset;
         lastoffset_sm = offset_sm;
     }
+    FONT_Write(FONT_FRANBIG, CurvColor, BackGrColor, X0 -46, Y0+ 0, "S");
+    FONT_Write(FONT_FRANBIG, CurvColor, BackGrColor, X0 -50, Y0+30, "W");
+    FONT_Write(FONT_FRANBIG, CurvColor, BackGrColor, X0 -46, Y0+60, "R");
     cursorPos=MinIndex;
     DrawCursor();
     if(grType==GRAPH_VSWR_Z){
@@ -1021,11 +1254,8 @@ static void DrawVSWR(void)
             MaxZ=1.5f*MinZ;
             MinZ=0.5f*MinZ;
         }
-        if((autofast == 0) || ((firstRun == 1) && (autofast == 1))) {
-            firstRun = 0;
-            factorA=200./(MaxZ-MinZ);
-            factorB=-200.*MinZ/(MaxZ-MinZ);
-        }
+        factorA=200./(MaxZ-MinZ);
+        factorB=-200.*MinZ/(MaxZ-MinZ);
         for(i = 0; i <= WWIDTH; i++)
         {
             impedance = cimagf(values[i])*cimagf(values[i])+crealf(values[i])*crealf(values[i]);
@@ -1056,6 +1286,147 @@ static void DrawVSWR(void)
         DrawRX(0,1);
     }
 }
+static void DrawVSWR(void)
+{  float last_x,min_swr=9999;
+    if (!isMeasured)
+        return;
+    MinSWR=0;
+    MinIndex=9999;
+    float MaxZ, MinZ, factorA, factorB;
+    int lastoffset = 0;
+    int lastoffset_sm = 0;
+    int lastoffset_q = 0;
+
+    int i, x;
+    float swr_float, swr_float_sm;
+    int offset_log, offset_log_sm;
+    int offset;
+    int offset_sm;
+    int offset_q;
+    for(i = 0; i <= WWIDTH; i++)
+    {
+        swr_float=DSP_CalcVSWR(values[i]);
+        swr_float_sm = DSP_CalcVSWR(SmoothRX(i,  f1 > (CFG_GetParam(CFG_PARAM_BAND_FMAX) ) ? 1 : 0));
+        offset_log=14*log10f(swr_float)+1;
+        if(loglog==1){
+            offset=swroffset(offset_log);
+            offset_sm=swroffset(14*log10f(swr_float_sm)+1);
+        }
+        else{
+            offset=swroffset(swr_float);
+            offset_sm=swroffset(swr_float_sm);
+        }
+        int x = X0 + i;
+        /*
+        if(WY(offset_sm)>MinSWR) {//offset
+            MinSWR=WY(offset_sm);
+            MinIndex=i;
+        }
+        */
+        //////////////////    LZ5ZI
+        if(grType==GRAPH_VSWR_RX && ((last_x<=0.0 && cimagf(values[i])>=0.0)||cimagf(values[i])==0.0))
+            MinIndex=i;
+        else
+            if(DSP_CalcVSWR(values[i])<min_swr)
+            {//offset
+                min_swr=DSP_CalcVSWR(values[i]);
+                MinIndex=i;
+            }
+        last_x=cimagf(values[i]);
+        //////////////////    LZ5ZI
+        if(i == 0)
+        {
+            LCD_SetPixel(LCD_MakePoint(x, WY(offset_sm)), CurvColor);
+        }
+        else
+        {
+            LCD_Line(LCD_MakePoint(x - 1, WY(lastoffset_sm)), LCD_MakePoint(x, WY(offset_sm)), CurvColor);
+            if(FatLines){
+                LCD_Line(LCD_MakePoint(x - 1, WY(lastoffset_sm)-1), LCD_MakePoint(x, WY(offset_sm)-1), CurvColor);
+                LCD_Line(LCD_MakePoint(x - 2, WY(lastoffset_sm)-1), LCD_MakePoint(x-1, WY(offset_sm)-1), CurvColor);
+                LCD_Line(LCD_MakePoint(x , WY(lastoffset_sm)-1), LCD_MakePoint(x+1, WY(offset_sm)+1), CurvColor);
+            }
+        }
+        lastoffset = offset;
+        lastoffset_sm = offset_sm;
+    }
+    FONT_Write(FONT_FRANBIG, CurvColor, BackGrColor, X0 -46, Y0+ 0, "S");
+    FONT_Write(FONT_FRANBIG, CurvColor, BackGrColor, X0 -50, Y0+30, "W");
+    FONT_Write(FONT_FRANBIG, CurvColor, BackGrColor, X0 -46, Y0+60, "R");
+    cursorPos=MinIndex;
+    DrawCursor();
+    if(grType==GRAPH_VSWR_Z){
+        float R,X,Q,impedance;
+        int yofs,yofs_q, yofs_sm;
+        lastoffset = 0;
+        lastoffset_sm = 0;
+        lastoffset_q = 0;
+        MaxZ=0;
+        MinZ=999999.;
+        for(i = 0; i <= WWIDTH; i++)
+        {
+
+            impedance = cimagf(values[i])*cimagf(values[i])+crealf(values[i])*crealf(values[i]);
+            impedance=sqrtf(impedance);
+            if (impedance < MinZ)
+                MinZ=impedance ;
+            if (impedance > MaxZ)
+                MaxZ=impedance ;
+        }
+        if(MinZ<2) MinZ=2;
+        if(MaxZ/MinZ<2) {
+            MaxZ=1.5f*MinZ;
+            MinZ=0.5f*MinZ;
+        }
+        factorA=200./(MaxZ-MinZ);
+        factorB=-200.*MinZ/(MaxZ-MinZ);
+        for(i = 0; i <= WWIDTH; i++)
+        {
+            R = crealf(values[i]);
+            X = cimagf(values[i]);
+            if(R!=0.0)
+                Q=X/R;
+            if(Q<0.0)
+                Q=-Q;
+            impedance = cimagf(values[i])*cimagf(values[i])+crealf(values[i])*crealf(values[i]);
+            impedance=sqrtf(impedance);
+            yofs=factorA*impedance+factorB;
+            yofs_q=5*factorA*Q+factorB;
+
+            x = X0 + i;
+            if(i == 0)
+            {
+                LCD_SetPixel(LCD_MakePoint(x, WY(yofs)), LCD_RED);
+                LCD_SetPixel(LCD_MakePoint(x, WY(yofs)+1), LCD_RED);
+
+                LCD_SetPixel(LCD_MakePoint(x, WY(yofs_q)), LCD_COLOR_WHITE);    //Q graph
+                LCD_SetPixel(LCD_MakePoint(x, WY(yofs_q)+1), LCD_COLOR_WHITE);
+            }
+            else
+            {
+                LCD_Line(LCD_MakePoint(x - 1, WY(lastoffset)), LCD_MakePoint(x, WY(yofs)), LCD_RED);
+                LCD_Line(LCD_MakePoint(x - 1, WY(lastoffset_q)), LCD_MakePoint(x, WY(yofs_q)), LCD_COLOR_WHITE);
+                if(FatLines){
+                    LCD_Line(LCD_MakePoint(x - 1, WY(lastoffset)+1), LCD_MakePoint(x, WY(yofs)+1), LCD_RED);
+                    LCD_Line(LCD_MakePoint(x - 1, WY(lastoffset)+2), LCD_MakePoint(x, WY(yofs)+2), LCD_RED);
+                    LCD_Line(LCD_MakePoint(x - 1, WY(lastoffset_q)+1), LCD_MakePoint(x, WY(yofs_q)+1), LCD_COLOR_WHITE);
+                    LCD_Line(LCD_MakePoint(x - 1, WY(lastoffset_q)+2), LCD_MakePoint(x, WY(yofs_q)+2), LCD_COLOR_WHITE);
+                }
+
+            }
+            lastoffset = yofs;
+            lastoffset_q = yofs_q;
+            lastoffset_sm = yofs_sm;
+        }
+    DrawX_Scale(MaxZ,  MinZ);
+    FONT_Write(FONT_FRANBIG, LCD_RED, BackGrColor, X0 +405, Y0+10, "|Z|");
+    FONT_Write(FONT_FRANBIG, LCD_COLOR_WHITE, BackGrColor, X0 +405, Y0+60, "Q");
+    }
+    else if (grType==GRAPH_VSWR_RX){
+        DrawRX(0,1);
+    }
+}
+
 
 static void LoadBkups()
 {
@@ -1074,7 +1445,7 @@ static void LoadBkups()
     }
 
     int spbkup = CFG_GetParam(CFG_PARAM_PAN_SPAN);
-    if (spbkup <= BS500M)// DL8MBY
+    if (spbkup <= BS100M)
     {
         span = (BANDSPAN)spbkup;
     }
@@ -1085,12 +1456,12 @@ static void LoadBkups()
         CFG_Flush();
     }
 }
-/*
+
 static void DrawHelp(void)
 {
     FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 160,  20, "(Tap here to set F and Span)");
     FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 160, 110, "(Tap here change graph type)");
-}*/
+}
 
 /*
    This function is based on:
@@ -1139,18 +1510,15 @@ static void DrawS11()
     if (!isMeasured)
         return;
     //Find min value among scanned S11 to set up scale
-    if((autofast == 0) || ((firstRun == 1) && (autofast == 1))) {
-        firstRun = 0;
-        minS11 = 0.f;
-        for (i = 0; i <= WWIDTH; i++)
-        {
-            if (S11Calc(DSP_CalcVSWR(values[i])) < minS11)
-                minS11 = S11Calc(DSP_CalcVSWR(values[i]));
-        }
-
-        if (minS11 < -60.f)
-            minS11 = -60.f;
+    float minS11 = 0.f;
+    for (i = 0; i <= WWIDTH; i++)
+    {
+        if (S11Calc(DSP_CalcVSWR(values[i])) < minS11)
+            minS11 = S11Calc(DSP_CalcVSWR(values[i]));
     }
+
+    if (minS11 < -60.f)
+        minS11 = -60.f;
 
     int nticks = 14; //Max number of intermediate ticks of labels
     float range = nicenum(-minS11, 0);
@@ -1159,7 +1527,7 @@ static void DrawS11()
     float graphmax = 0.f;
     float grange = graphmax - graphmin;
     float nfrac = MAX(-floorf(log10f(d)), 0);  // # of fractional digits to show
-    char str[20];
+    char str[100];
     if (nfrac > 4) nfrac = 4;
     sprintf(str, "%%.%df", (int)nfrac);             // simplest axis labels
 
@@ -1174,7 +1542,7 @@ static void DrawS11()
     {
         sprintf(buf, str, labelValue); //Get label string in buf
         yofs = S11OFFS(labelValue);
-        FONT_Write(FONT_FRAN, TextColor, BackGrColor,  X0 - 21, WY(yofs) - 12, buf);// FONT_SDIGITS WK
+        FONT_Write(FONT_FRAN, TextColor, BackGrColor,  X0 - 30, WY(yofs) - 12, buf);// FONT_SDIGITS WK
         if (roundf(labelValue) == 0)
             LCD_HLine(LCD_MakePoint(X0, WY(S11OFFS(0.f))), WWIDTH, WGRIDCOLOR);
         else
@@ -1216,10 +1584,11 @@ static void DrawS11()
     DrawCursor();
 }
 
+
 void DrawX_Scale(float MaxZ, float MinZ){
-float labelValue, d;
+float labelValue, d, factorA, factorB;
 int yofs;
-char str[20];
+char str[100];
 int nticks = 7; //Max number of intermediate ticks of labels 8
 float range_i = nicenum(MaxZ - MinZ, 0);
     d = nicenum(range_i / (nticks - 1), 1);
@@ -1233,11 +1602,9 @@ float range_i = nicenum(MaxZ - MinZ, 0);
 
     //Draw  labels
     yofs = 0;
-    if((autofast == 0) || ((firstRun == 1) && (autofast == 1))) {
-        firstRun = 0;
-        factorA=200./(MaxZ-MinZ);
-        factorB=-200.*MinZ/(MaxZ-MinZ);
-    }
+
+    factorA=200./(MaxZ-MinZ);
+    factorB=-200.*MinZ/(MaxZ-MinZ);
     for (labelValue = graphmin_i; labelValue < graphmax_i + (.5 * d); labelValue += d)
     {
         if (graphmax_i >=10000 )
@@ -1322,7 +1689,7 @@ static void DrawRX(int SelQu, int SelEqu)// SelQu=1, if quartz measurement  SelE
     float graphmax_r = ceilf(maxRXr / d) * d;
     float grange_r = graphmax_r - graphmin_r;
     float nfrac_r = MAX(-floorf(log10f(d)), 0);  // # of fractional digits to show
-    char str[20];
+    char str[100];
     if (nfrac_r > 4) nfrac_r = 4;
     sprintf(str, "%%.%df", (int)nfrac_r);             // simplest axis labels
 
@@ -1340,7 +1707,7 @@ static void DrawRX(int SelQu, int SelEqu)// SelQu=1, if quartz measurement  SelE
         yofs = RXOFFS(labelValue);
         sprintf(buf, str, labelValue); //Get label string in buf
         if(SelEqu==0)// print only if we don't have equal scales
-            FONT_Write(FONT_FRAN,RCurvColor, BackGrColor, 27, WY(yofs) - 12, buf);// WK
+            FONT_Write(FONT_FRAN,RCurvColor, BackGrColor, 2, WY(yofs) - 12, buf);// WK
         if (roundf(labelValue) == 0)
             LCD_HLine(LCD_MakePoint(RXX0, WY(RXOFFS(0.f))), WWIDTH, WGRIDCOLORBR);
         else
@@ -1495,7 +1862,7 @@ static void DrawSmith(void)
 static void RedrawWindow()
 {
     isSaved = 0;
-
+    LCD_FillRect(LCD_MakePoint(0, 234),LCD_MakePoint(478, 248),BackGrColor);
     if ((grType == GRAPH_VSWR)||(grType == GRAPH_VSWR_Z)||(grType == GRAPH_VSWR_RX))
     {
         DrawGrid(GRAPH_VSWR);
@@ -1516,22 +1883,17 @@ static void RedrawWindow()
     else
         DrawSmith();
     DrawCursor();
-    if ((isMeasured) && (grType != GRAPH_S11))
+    if ((grType != GRAPH_S11))
     {
         DrawCursorText();
         DrawBottomText();
-    //    DrawAutoText();
+        DrawAutoText();
     }
-    else if ((isMeasured) && (CFG_GetParam(CFG_PARAM_S11_SHOW) == 1) && (grType == GRAPH_S11))
+    else if ((CFG_GetParam(CFG_PARAM_S11_SHOW) == 1) && (grType == GRAPH_S11))
     {
         DrawCursorTextWithS11();
         DrawBottomText();
-  //      DrawAutoText();
-    }
-    else
-    {
-    DrawFootText();
-    //DrawAutoText();
+        DrawAutoText();
     }
 }
 
@@ -1733,7 +2095,7 @@ int touch;
 }
 
 
-char str[6];
+char str[100];
 int i;
 
 uint32_t freqx;// kHz
@@ -1792,23 +2154,18 @@ void SWR_Exit(void){
     rqExitSWR=true;
 }
 
-static int muted;
-static uint32_t ToneFreq;
-static int ToneTrigger;
+static int Tone;
 
 void SWR_Mute(void){
-    if(muted==1){
-        muted=0;
-        SWRTone=1;//tone
-        FONT_Write(FONT_FRANBIG, M_FGCOLOR, M_BGCOLOR, 198, 212, " Mute ");
+    if(Tone==0){
+        Tone=1;//tone
+        FONT_Write(FONT_FRANBIG, M_FGCOLOR, M_BGCOLOR, 198, 212, " Tone ");
         SWRLimit=1;
-        UB_TIMER2_Init_FRQ(ToneFreq); //100...1000 Hz
         UB_TIMER2_Start();
     }
     else {
-        muted=1;
-        SWRTone=0;
-        FONT_Write(FONT_FRANBIG, M_FGCOLOR, M_BGCOLOR, 198, 212, " Tone ");
+        Tone=0;//no tone
+        FONT_Write(FONT_FRANBIG, M_FGCOLOR, M_BGCOLOR, 198, 212, " Mute ");
     }
 }
 
@@ -1824,9 +2181,6 @@ static void SWR_2(void){
     }
     while(TOUCH_IsPressed());
     Sleep(50);
-    SWRTone=1;
-    muted=0;
-    ToneTrigger=1;
 }
 
 static void SWR_3(void){
@@ -1841,30 +2195,19 @@ static void SWR_3(void){
     }
     while(TOUCH_IsPressed());
     Sleep(50);
-    SWRTone=1;
-    muted=0;
-    ToneTrigger=1;
 }
 
-static void ShowFr(void)
+static void ShowMeasFr(void)
 {
-    char str[20];
+    char str[100];
     uint8_t i,j;
-    unsigned int freq=(unsigned int)(CFG_GetParam(CFG_PARAM_MEAS_F) / 1000);
-    sprintf(str, "F: %u MHz  ", freq);
-    if(freq>999){// WK
-        for(i=3;i<10;i++){
-            if(str[i]==' ') break;// search space before "kHz"
-        }
-        for(j=i+3;j>i-4;j--){
-           str[j+1]=str[j];
-        }
-        str[i-3]='.';
-        str[i+5]=0;
-    }
-    LCD_FillRect(LCD_MakePoint(0, 60), LCD_MakePoint(200,115), BackGrColor);
-    FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 0, 60, str);// WK
+    float freq=(float)(CFG_GetParam(CFG_PARAM_MEAS_F) / 1000000.0);
+    sprintf(str, "F: %.3f MHz  ", freq);
+    LCD_FillRect(LCD_MakePoint(150, 35), LCD_MakePoint(320,65), BackGrColor);
+    //
+    FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 150, 35, str);// WK
 }
+
 
 static uint32_t fxs = 3600000ul; //Scan range start frequency, in Hz
 static uint32_t fxkHzs;//Scan range start frequency, in kHz
@@ -1875,7 +2218,8 @@ void SWR_SetFrequency(void)
 //    while(TOUCH_IsPressed()); WK
     fxs=CFG_GetParam(CFG_PARAM_MEAS_F);
     fxkHzs=fxs/1000;
-    span=BS400;
+    //span=BS400;
+
     if (PanFreqWindow(&fxkHzs, (BANDSPAN*)&span))
         {
             //Span or frequency has been changed
@@ -1886,15 +2230,8 @@ void SWR_SetFrequency(void)
     CFG_Flush();
   //  redrawWindow = 1;
     Sleep(200);
-    ShowFr();
+    ShowMeasFr();
     sFreq=1;
-}
-
-void SWR_SetFrequencyMuted(void){
-int ToneSaved=SWRTone;
-    SWRTone=0;
-    SWR_SetFrequency();
-    SWRTone=ToneSaved;
 }
 
 void setup_GPIO(void) // GPIO I Pin 2 for buzzer
@@ -1908,12 +2245,12 @@ GPIO_InitTypeDef gpioInitStructure;
   gpioInitStructure.Speed = GPIO_SPEED_MEDIUM;
   HAL_GPIO_Init(GPIOI, &gpioInitStructure);
   HAL_GPIO_WritePin(GPIOI, GPIO_PIN_2, 0);
-  //SWRTone=0;
+  //AUDIO1=0;
 }
 
 static uint32_t freqChg;
-uint8_t SWRTone=1;
-//TEXTBOX_CTX_t SWR1_ctx;
+
+uint8_t AUDIO1=1;
 
 void Tune_SWR_Proc(void){// -----------------------------------------------------------------------
 
@@ -1922,9 +2259,9 @@ char str[20];
 float vswrf, vswrf_old, vswLogf, SwrDiff;
 uint32_t width, vswLog=0, Timer;
 uint32_t color1, vswr10, vsw_old, k=0;
-
+TEXTBOX_CTX_t SWR1_ctx;
+    Tone=1;//tone on
     SWRLimit=1;
-    ToneTrigger=0;
     setup_GPIO();// GPIO I Pin 2 for buzzer
     freqChg=0;
     rqExitSWR=false;
@@ -1935,31 +2272,30 @@ uint32_t color1, vswr10, vsw_old, k=0;
     while(TOUCH_IsPressed());
     fxs=CFG_GetParam(CFG_PARAM_MEAS_F);
     fxkHzs=fxs/1000;
-    ShowFr();
-    TEXTBOX_InitContext(&SWR1);
-    muted=0;// begin without mute
-    SWRTone=1;//tone on
+    ShowMeasFr();
+    TEXTBOX_InitContext(&SWR1_ctx);
+    AUDIO1=1;
     UB_TIMER2_Init_FRQ((uint32_t)(400)); //100...1000 Hz
     UB_TIMER2_Start();
 
 //HW calibration menu
-    TEXTBOX_Append(&SWR1, (TEXTBOX_t*)tb_menuSWR);
-    TEXTBOX_DrawContext(&SWR1);
+    TEXTBOX_Append(&SWR1_ctx, (TEXTBOX_t*)tb_menuSWR);
+    TEXTBOX_DrawContext(&SWR1_ctx);
 for(;;)
     {
         Sleep(0); //for autosleep to work
-        if (TEXTBOX_HitTest(&SWR1))
+        if (TEXTBOX_HitTest(&SWR1_ctx))
         {
             if (rqExitSWR)
             {
-                SWRTone=0;
+                Tone=0;
                 //UB_TIMER2_Init_FRQ(1000);
                 rqExitSWR=false;
                 GEN_SetMeasurementFreq(0);
                 return;
             }
             if(freqChg==1){
-               ShowFr();
+               ShowMeasFr();
                freqChg=0;
             }
             Sleep(50);
@@ -1971,23 +2307,21 @@ for(;;)
             vswrf = DSP_CalcVSWR(DSP_MeasuredZ());
             SwrDiff=vswrf_old-vswrf;
             if(SwrDiff<0)SwrDiff=-SwrDiff;
-            if((ToneTrigger==1)||(SwrDiff>0.01*vswrf)){// Difference more than 1 %
-                ToneTrigger=0;
+            if((SwrDiff>0.01*vswrf)){// Difference more than 3 %
                 vswrf_old=vswrf;
                 vswr10=10.0*vswrf;
                 if(SWRLimit==2){
-                    if(vswr10>20) SWRTone=1;
-                    else SWRTone=0;
+                    if(vswr10>20) Tone=1;
+                    else Tone=0;
                 }
                 if(SWRLimit==3){
-                    if(vswr10>30) SWRTone=1;
-                    else SWRTone=0;
+                    if(vswr10>30) Tone=1;
+                    else Tone=0;
                 }
                 vswLogf= 200.0*log10f(10.0*log10f(vswrf)+5.0);
 
-                if(SWRTone==1){
-                    ToneFreq= (uint32_t) (6.0*vswLogf-250.0);
-                    UB_TIMER2_Init_FRQ(ToneFreq); //100...1000 Hz
+                if(Tone==1){
+                    UB_TIMER2_Init_FRQ((uint32_t)(6.0*vswLogf-250.0)); //100...1000 Hz
                     UB_TIMER2_Start();
                 }
                 else UB_TIMER2_Stop();
@@ -2017,7 +2351,6 @@ int i,j;
 
     while(TOUCH_IsPressed());
     SetColours();
-    SWRTone=0;
     reverse1=true;
     multi_fr[0]=CFG_GetParam(CFG_PARAM_MULTI_F1);//  in kHz
     multi_fr[1]=CFG_GetParam(CFG_PARAM_MULTI_F2);
@@ -2106,322 +2439,203 @@ int i,j;
     }
 }
 
-static int redrawRequired;
-static int Switch;
-static int Sel1,Sel2,Sel3;
-static uint32_t Saving;
-static int32_t FreqkHz;
-static int32_t k;
-
-void DrawFootText(void){
-    TEXTBOX_DrawContext(&SWR1);
-    LCD_Rectangle(LCD_MakePoint(0, 100),
-        LCD_MakePoint(25, 128),M_FGCOLOR);
-    FONT_Write(FONT_FRAN, TextColor, BackGrColor, 7, 105, "<");
-    LCD_Rectangle(LCD_MakePoint(0, 132),
-        LCD_MakePoint(25, 160),M_FGCOLOR);
-    FONT_Write(FONT_FRAN, TextColor, BackGrColor, 7, 138, ">");
-
-    if(Switch==0){
-        TEXTBOX_SetText(&SWR1,1,"Menu2");
-        TEXTBOX_SetText(&SWR1,2,"Store");
-        TEXTBOX_SetText(&SWR1,5,"Auto(fast)");
-        TEXTBOX_SetText(&SWR1,6,"Scan");
-    }
-    else{
-
-        TEXTBOX_SetText(&SWR1,1,"Menu1");
-        if(loglog==1) {
-            TEXTBOX_SetText(&SWR1,5,"LogLog");
-        }
-        else {
-            TEXTBOX_SetText(&SWR1,5,"Log");
-        }
-        TEXTBOX_SetText(&SWR1,6,"Frequency");
-    }
-    if((Saving==1)||(Sel1==1)||(Sel2==1)||(Sel3==1)){
-        TEXTBOX_SetText(&SWR1,9,"M1");
-        TEXTBOX_SetText(&SWR1,10,"M2");
-        TEXTBOX_SetText(&SWR1,11,"M3");
-        if(Sel1==1)
-            LCD_Rectangle(LCD_MakePoint(454, 100), LCD_MakePoint(478, 125),0xffff0000);//  Red
-        if(Sel2==1)
-            LCD_Rectangle(LCD_MakePoint(454, 127), LCD_MakePoint(478, 152),0xffff0000);//  Red
-        if(Sel3==1)
-            LCD_Rectangle(LCD_MakePoint(454, 154), LCD_MakePoint(478, 179),0xffff0000);//  Red
-    }
-    else LCD_FillRect((LCDPoint){454,100}, (LCDPoint){479,180}, BackGrColor);// delete M1..M3 Buttons
-}
-
-void ZoomMinus(void){
-    if(span>0){
-        span--;
-        isMeasured = 0;
-        redrawRequired = 1;
-    }
-}
-void ZoomPlus(void){
-    if(span<BS500M){// DL8MBY
-        span++;
-        isMeasured = 0;
-        redrawRequired = 1;
-    }
-}
-
-void SWR_Exit0(void){//                     Button 0
-    rqExitSWR=true;// exit program
-}
-
-void Switch_Menu(void){// Button 1
-    if(Switch==0){// switch to menu 2
-        Switch=1;
-        TEXTBOX_SetText(&SWR1,1,"Menu1");
-    }
-    else{
-        Switch=0;
-        TEXTBOX_SetText(&SWR1,1,"Menu2");
-    }
-    Saving=0;
-    redrawRequired = 1;
-}
-
-void Store(void){//             Button 2
-int k;
-    autofast=0;
-    if(Switch==0){
-        if(isMeasured==1){
-            Saving=1;
-            isStored=1;
-        }
-    }
-    redrawRequired = 1;
-}
-
-void DiagType(void){//                      Button3
-int k;
-                                            // toggle Diagram Type
-    if (grType == GRAPH_VSWR)
-        grType = GRAPH_VSWR_Z;
-    else if (grType == GRAPH_VSWR_Z)
-        grType = GRAPH_VSWR_RX;
-    else if (grType == GRAPH_VSWR_RX)
-        grType = GRAPH_RX;
-    else if ((grType == GRAPH_RX) && (CFG_GetParam(CFG_PARAM_S11_SHOW) == 1))
-        grType = GRAPH_S11;
-    else if ((grType == GRAPH_RX) && (CFG_GetParam(CFG_PARAM_S11_SHOW) == 0))
-        grType = GRAPH_SMITH;
-    else if (grType == GRAPH_S11)
-        grType = GRAPH_SMITH;
-    else
-        grType = GRAPH_VSWR;
-    redrawRequired = 1;
+void zoomMinus(void){
 
 }
-
-void Save_Snap(void){// Save Snap             Button4
-    autofast=0;
-    save_snapshot();
-}
-
-void Auto_Fast(void){// Auto(fast)            Button5
-    if(Switch==0){
-        if(autofast==0){
-            autofast = 1;
-            firstRun=1;
-        }
-        else {
-            autofast=0;
-        }
-    }
-    else if(Switch==1){
-        if(loglog==0) loglog=1;
-        else loglog=0;
-    redrawRequired=1;
-    }
-}
-
-void Frequency(void){
-    FreqkHz=f1/1000;
-    if(PanFreqWindow(&FreqkHz, &span)) {
-        //Span or frequency has been changed
-        f1=1000*FreqkHz;
-        isMeasured = 0;
-    }
-    redrawRequired = 1;
-}
-
-void Scan(void){// Scan  or  Frequency        Button6
-
-    if((Switch==0)){
-        if (0 == autofast) {
-            FONT_Write(FONT_FRANBIG, LCD_RED, LCD_BLACK, 160, 100, "       Scanning...     ");
-            ScanRX(0);
-        }
-        else  {
-            autofast = 0;
-        }
-
-        redrawRequired = 1;
-    }
-    else{
-       Frequency();
-    }
-}
-
-void Mem1(void){//                                  M1
-    if(Saving==1){
-        memcpy(SavedValues1, values,(WWIDTH+1)*8);
-        LCD_Rectangle(LCD_MakePoint(454, 100), LCD_MakePoint(479, 125),0xffff0000);//  Red
-        Sel1=1;
-        Saving=0;
-    }
-    else if((Saving==0)&&(Sel1==1)){//                       Recall
-        memcpy(values, SavedValues1, (WWIDTH+1)*8);
-    }
-    redrawRequired = 1;
-}
-void Mem2(void){//                                  M2
-   if(Saving==1){
-        memcpy(SavedValues2, values,(WWIDTH+1)*8);
-        LCD_Rectangle(LCD_MakePoint(454, 127), LCD_MakePoint(479, 152),0xffff0000);//  Red
-        Sel2=1;
-        Saving=0;
-    }
-    else if((Saving==0)&&(Sel2==1)){//                       Recall
-        memcpy(values, SavedValues2, (WWIDTH+1)*8);
-    }
-    redrawRequired = 1;
-}
-
-void Mem3(void){//                                      M3
-
-    if(Saving==1){
-        memcpy(SavedValues3, values,(WWIDTH+1)*8);//    Save
-        LCD_Rectangle(LCD_MakePoint(454, 154), LCD_MakePoint(479, 179),0xffff0000);//  Red
-        Sel3=1;
-        Saving=0;
-    }
-    else if((Saving==0)&&(Sel3==1)){//                       Recall
-        memcpy(values, SavedValues3, (WWIDTH+1)*8);
-    }
-    redrawRequired = 1;
-}
-static void DrawHelp(void)
-{
-    FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 160,  20, "(Tap here to set F and Span)");
-    FONT_Write(FONT_FRAN, LCD_PURPLE, LCD_BLACK, 160, 110, "(Tap here to change graph type)");
-}
-static void wait(void){
-    Sleep(200);
-}
-
-static const TEXTBOX_t tb_PANVSWR[] = {
-   (TEXTBOX_t){ .x0 = 0, .y0 = 248, .text = "Exit", .font = FONT_FRAN, .width = 50, .height = 22, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = LCD_RED, .cb = (void(*)(void))SWR_Exit0, .cbparam = 1,.next = (void*)&tb_PANVSWR[1]},
-   (TEXTBOX_t){.x0 = 52, .y0 = 248, .text = "Menu2", .font = FONT_FRAN,.width = 40, .height = 22, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = Switch_Menu , .cbparam = 1, .next = (void*)&tb_PANVSWR[2] },
-   (TEXTBOX_t){.x0 = 94, .y0 = 248, .text ="Store", .font = FONT_FRAN,.width = 54, .height = 22, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = Store, .cbparam = 1, .next = (void*)&tb_PANVSWR[3] },
-   (TEXTBOX_t){.x0 = 150, .y0 = 248, .text ="Diagram Type", .font = FONT_FRAN,.width = 76, .height = 22, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = DiagType , .cbparam = 1, .next = (void*)&tb_PANVSWR[4] },
-   (TEXTBOX_t){.x0 = 230, .y0 = 248, .text ="Save Snapshot", .font = FONT_FRAN,.width = 96, .height = 22, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = Save_Snap , .cbparam = 1, .next = (void*)&tb_PANVSWR[5] },
-   (TEXTBOX_t){.x0 = 328, .y0 = 248, .text ="Auto (fast)", .font = FONT_FRAN,.width = 80, .height = 22, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = Auto_Fast , .cbparam = 1, .next = (void*)&tb_PANVSWR[6] },
-   (TEXTBOX_t){.x0 = 410, .y0 = 248, .text ="Scan", .font = FONT_FRAN,.width = 60, .height = 22, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = Scan , .cbparam = 1, .next = (void*)&tb_PANVSWR[7] },
-   (TEXTBOX_t){.x0 = 0, .y0 = 193, .text = "Z-", .font = FONT_FRAN,.width = 24, .height = 25, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = ZoomMinus , .cbparam = 1, .next = (void*)&tb_PANVSWR[8] },
-   (TEXTBOX_t){.x0 = 454, .y0 = 193, .text = "Z+", .font = FONT_FRAN,.width = 24, .height = 25, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = ZoomPlus , .cbparam = 1, .next = (void*)&tb_PANVSWR[9] },
-   (TEXTBOX_t){.x0 = 454, .y0 = 100, .text ="M1", .font = FONT_FRAN,.width = 24, .height = 25, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = Mem1 , .cbparam = 1, .next = (void*)&tb_PANVSWR[10] },
-   (TEXTBOX_t){.x0 = 454, .y0 = 127, .text ="M2", .font = FONT_FRAN,.width = 24, .height = 25, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = Mem2 , .cbparam = 1, .next = (void*)&tb_PANVSWR[11] },
-   (TEXTBOX_t){.x0 = 454, .y0 = 154, .text ="M3", .font = FONT_FRAN,.width = 24, .height = 25, .center = 1,
-                 .border = 1, .fgcolor = M_FGCOLOR, .bgcolor = M_BGCOLOR, .cb = Mem3 , .cbparam = 1, .next = (void*)&tb_PANVSWR[12] },
-   (TEXTBOX_t){.type=TEXTBOX_TYPE_HITRECT,.x0 = 80, .y0 = 60, .text ="", .font = FONT_FRAN,.width = 320, .height = 120, .center = 0,
-                 .border = 0, .fgcolor = 0, .bgcolor = 0, .cb = DiagType , .cbparam = 1,  },
-
-};
-
 
 void PANVSWR2_Proc(void)// **************************************************************************+*********
 {
-    BeepIsOn=1;//       ??
-    firstRun=1;
-    autofast=0;
-    Saving=0;
-    redrawRequired=0;
+int redrawRequired = 0;
+uint32_t activeLayer;
+uint32_t FreqkHz;
+int bip;
+    f1=CFG_GetParam(CFG_PARAM_PAN_F1);
     SetColours();
-    Switch=0;// menu 1
-    SWRTone=0;
-    isStored=0;
     LCD_FillAll(BackGrColor);
     FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 120, 100, "Panoramic scan mode");
     Sleep(1000);
     while(TOUCH_IsPressed());
 
     LoadBkups();
+    FreqkHz=f1/1000;
     grType = GRAPH_VSWR;
-
+    if (!isMeasured)
+    {
+        isSaved = 0;
+    }
     if (0 == modstrw)
     {
         modstrw = FONT_GetStrPixelWidth(FONT_FRAN, modstr);
     }
 
-    if (!isMeasured)
-    {
-        DrawGrid(1);
-        DrawHelp();
-        isSaved = 0;
-    }
-    else
-        RedrawWindow();
-
-    TEXTBOX_InitContext(&SWR1);
-
-    TEXTBOX_Append(&SWR1, (TEXTBOX_t*)tb_PANVSWR);
-    TEXTBOX_DrawContext(&SWR1);
-    DrawFootText();
-for(;;)
-    {
-        Sleep(0); //for autosleep to work
-        if (TOUCH_Poll(&pt)) {
-            if(pt.y<60) Frequency();//              Special Functions (invisible)
-
-            else if((pt.x>=0)&&(pt.x<=24)){//       without beep
-                if((pt.y>=100)&&(pt.y<=128))//       "<"
-                    DecrCursor();
-                else if((pt.y>=132)&&(pt.y<=160))//  ">"
-                    IncrCursor();
-                autofast=0;
-                continue;
-            }
-
+        if (!isMeasured)
+        {
+            DrawGrid(1);
+            DrawHelp();
         }
-        if (TEXTBOX_HitTest(&SWR1))  {
-            if (rqExitSWR) {
-                rqExitSWR=false;
-                while(TOUCH_IsPressed());
-                autofast = 0;
-                Sleep(100);
-                return;
-            }
-        }
-
-        if(redrawRequired!=0){
+        else
             RedrawWindow();
-            DrawFootText();
-            redrawRequired=0;
+    DrawFootText();
+    DrawAutoText();
+
+    for(;;)
+    {
+        Sleep(5);
+        activeLayer = BSP_LCD_GetActiveLayer();
+        BSP_LCD_SelectLayer(activeLayer);
+        if (TOUCH_Poll(&pt))
+        {
+            if(((grType == GRAPH_VSWR)||(grType == GRAPH_VSWR_Z))&&(pt.x<30)&&(pt.y>155)&&(pt.y<215)){
+                bip=0;
+                if(loglog==0) loglog=1;
+                else loglog=0;
+                redrawRequired = 1;
+            }
+            ///////////////
+            if ((pt.y < 80)&&(pt.x>360)&&autofast)// Top Right +100 Hz
+                f1+=100;
+            if ((pt.y < 80)&&(pt.x<60)&&autofast)// Top Left -100 Hz
+                f1-=100;
+            ///////////////
+            if ((pt.y < 80)&&(pt.x>160)&&(pt.x<320))// Top
+            {
+
+                if (PanFreqWindow(&FreqkHz, &span))
+                {
+                    //Span or frequency has been changed
+                    bip=0;
+                    f1=1000*FreqkHz;
+                    isMeasured = 0;
+                    RedrawWindow();
+                    redrawRequired = 1;
+                }
+            }
+            else if (pt.y > 90 && pt.y <= 170)
+            {
+                if (pt.x < 50)  // left <
+                {
+                    Beep(0);
+                    DecrCursor();
+                    continue;
+                }
+                else if (pt.x > 100 && pt.x < 380)   // center
+                {
+                    bip=1;
+                    if (grType == GRAPH_VSWR)
+                        grType = GRAPH_VSWR_Z;
+                    else if (grType == GRAPH_VSWR_Z)
+                        grType = GRAPH_VSWR_RX;
+                    else if (grType == GRAPH_VSWR_RX)
+                        grType = GRAPH_RX;
+                    else if ((grType == GRAPH_RX) && (CFG_GetParam(CFG_PARAM_S11_SHOW) == 1))
+                        grType = GRAPH_S11;
+                    else if ((grType == GRAPH_RX) && (CFG_GetParam(CFG_PARAM_S11_SHOW) == 0))
+                        grType = GRAPH_SMITH;
+                    else if (grType == GRAPH_S11)
+                        grType = GRAPH_SMITH;
+                    else
+                        grType = GRAPH_VSWR;
+                    redrawRequired = 1;
+                }
+                else if (pt.x > 430)    //right >
+                {
+                    Beep(0);
+                    IncrCursor();
+                    continue;
+                }
+            }
+            else if (pt.y > 200)
+            {
+                if (pt.x < 60) // Lower left corner EXIT
+                {
+                    Beep(0);
+                    while(TOUCH_IsPressed());
+                    autofast = 0;
+                    Sleep(100);
+                    return;// Exit
+                }
+                if (pt.x > 410)
+                { //Lower right corner: perform scan or turn off auto
+                    if (0 == autofast)
+                    {
+                        Beep(1);
+                        FONT_Write(FONT_FRANBIG, LCD_RED, LCD_BLACK, 180, 100, "  Scanning...  ");
+                        ScanRX_ZI();
+                        bip=2;// silence
+                        redrawRequired = 1;
+                    }
+                    else
+                    {
+                        bip=1;
+                        autofast = 0;
+                        redrawRequired = 1;
+                        //RedrawWindow();
+                    }
+
+                }
+                else if(pt.x > 70 && pt.x <= 104 ){
+                    //zoomMinus();
+                    bip=1;
+                    if(fcur!=0)
+                        f1=fcur*1000.;
+                    if(span>0)
+                        span--;
+                    if(0 == autofast)
+                        ScanRX(0);
+                    redrawRequired = 1;
+                }
+                 else if(pt.x > 104 && pt.x < 140 ){
+                    //zoomPlus();
+                    bip=1;
+                    if(fcur!=0)
+                        f1=fcur*1000.;
+                    if(span<BS100M)
+                        span++;
+                    if(0 == autofast)
+                        ScanRX(0);
+                    redrawRequired = 1;
+                }
+                else if (pt.x > 150 && pt.x < 240 && isMeasured && !isSaved)
+                {
+                    bip=1;
+                    save_snapshot();
+                }
+                else if (pt.x >= 260 && pt.x <= 370)
+                {
+                    autofast = !autofast;
+                    redrawRequired = 1;
+                }
+            }
+            if(bip<2)
+                Beep(bip);
+            if(redrawRequired)
+            {
+                BSP_LCD_SelectLayer(!activeLayer);
+                RedrawWindow();
+                BSP_LCD_SelectLayer(activeLayer);
+                RedrawWindow();
+            }
+            while(TOUCH_IsPressed())
+            {
+                Sleep(250);
+            }
+
         }
-        if(autofast==0)
-            LCD_Rectangle(LCD_MakePoint(328, 248), LCD_MakePoint(408, 270),M_FGCOLOR);
-        else {
-            LCD_Rectangle(LCD_MakePoint(328, 248), LCD_MakePoint(408, 270),0xffff0000);//  Red
+        else
+        {
+            cursorChangeCount = 0;
+            beep=0;
+        }
+
+        if (autofast && (cursorChangeCount == 0))
+        {
+			activeLayer = BSP_LCD_GetActiveLayer();
+            BSP_LCD_SelectLayer(!activeLayer);
             ScanRXFast();
-            redrawRequired=1;
+            RedrawWindow();
+            autosleep_timer = 30000; //CFG_GetParam(CFG_PARAM_LOWPWR_TIME);
         }
+        LCD_ShowActiveLayerOnly();
     }
 }
 
@@ -2429,114 +2643,609 @@ for(;;)
 TEXTBOX_CTX_t Quartz_ctx;
 float C0;
 
+FIL QuDataFile;           /* File object */
+FRESULT res;                                          /* FatFs function common result code */
+uint32_t byteswritten, bytesread;                     /* File write/read counts */
+char fileeebuffer [200]="hfxyciluojioi;tgsvbiuubn  y ggoig i iu uiu iu iu  ygyug ";
+char filebuffer [2200];
+static int qu_num;
+
+
+void QuAddToFile(void)
+{
+//static int qu_num;
+
+    sprintf(str, "%.2d  ", qu_num+1);
+    strcat (filebuffer,str);
+/*
+    sprintf(str, "Fs:%6.3f  ", Fs/1000.0);
+    strcat (filebuffer,str);
+
+    sprintf(str, "Fp:%6.3f  ", Fp/1000.0);
+    strcat (filebuffer,str);
+    */
+    sprintf(str, "%6.3f  ", Fs/1000.0);
+    strcat (filebuffer,str);
+
+    sprintf(str, "%6.3f  ", Fp/1000.0);
+    strcat (filebuffer,str);
+
+    sprintf(str, "%6.0f    ", Q);
+    strcat (filebuffer,str);
+
+    sprintf(str, "%.1f mH    ", 1e3*Ls1);
+    strcat (filebuffer,str);
+
+    sprintf(str, "%.4f pF    ", 1e12*Cs);
+    strcat (filebuffer,str);
+
+    sprintf(str, "%.1f Ohm   ", Rs);
+    strcat (filebuffer,str);
+
+    sprintf(str, "%.2f pF\r", 1e12*Cp);
+    strcat (filebuffer,str);
+
+    qu_num++;
+    FONT_Print(FONT_FRANBIG, TextColor, BackGrColor, 0, 0, "Qu %d  ", qu_num);
+    FONT_Print(FONT_FRAN, TextColor, BackGrColor, 0, 30, "lenght: %d   ",strlen(filebuffer));
+}
+
+void QuSaveFile(void)
+{
+    res =f_unlink("QuData.TXT");
+    if(f_open(&QuDataFile, "QuData.TXT", FA_OPEN_ALWAYS | FA_WRITE) != FR_OK)
+    {
+        FONT_Print(FONT_FRANBIG, LCD_COLOR_RED, BackGrColor, 150, 35, "ERROR");
+        Sleep(1000);
+        while(TOUCH_IsPressed());
+        FONT_Print(FONT_FRANBIG, BackGrColor, BackGrColor, 150, 35, "ERROR");
+    }
+    else
+    {
+        strcat (filebuffer,"----------------------------------end---------------------------------------\n");
+        res = f_write(&QuDataFile, filebuffer, sizeof filebuffer/*strlen(filebuffer)+1*/, (void *)&byteswritten);
+        f_close(&QuDataFile);
+        FONT_Print(FONT_FRANBIG, LCD_COLOR_GREEN, BackGrColor, 315, 0, "OK");
+        Sleep(1000);
+        while(TOUCH_IsPressed());
+        FONT_Print(FONT_FRANBIG, BackGrColor, BackGrColor, 315, 0, "OK"); // CLEAR
+    }
+    while(TOUCH_IsPressed());
+}
+float Get_C(void)
+{
+    float complex rx0;
+    uint32_t fstart, freq1;
+    float r= fabsf(crealf(rx0));//calculate Cp (quartz)
+    float im= cimagf(rx0);
+    float c,xp=1.0f;
+
+    if(Fs!=0)
+        freq1= Fs-100000;
+    else
+        freq1=CFG_GetParam(CFG_PARAM_MEAS_F);
+
+    //freq1=7900000;
+    DSP_Measure(freq1, 1, 1, 3); //Fake initial run to let the circuit stabilize
+    rx0 = DSP_MeasuredZ();
+    Sleep(20);
+
+    DSP_Measure(freq1, 1, 1, 3);
+
+    rx0 = DSP_MeasuredZ();
+    r= fabsf(crealf(rx0));//calculate Cp (quartz)
+    im= cimagf(rx0);
+
+    if(im*im>0.0025)
+        xp=im+r*(r/im);// else xp=im=-10000.0f;// ??
+
+    c=-1/( 6.2832 *freq1* xp);
+    return c;
+}
+
+
 void QuCalibrate(void){
     if(sFreq==0){
-        FONT_Write(FONT_FRAN, TextColor, BackGrColor, 10, 50, "First set estimated Frequency ");
-        Sleep(2000);
+        FONT_Write(FONT_FRAN, TextColor, BackGrColor, 10, 100, "First set estimated Frequency ");
+        Sleep(20);
         return;
     }
-    else    FONT_Write(FONT_FRAN, TextColor, BackGrColor, 10, 50, "                                   ");
+    else    FONT_Write(FONT_FRAN, TextColor, BackGrColor, 10, 100, "                                   ");
     if(span>BS1000) span=BS1000;// maximum: 1 MHz
-    ScanRX(1);//only compute C0
-    C0=Cp;
+    //ScanRX_QuFast(1);;//only compute C0
+    C0=Get_C();
+    //C0=Cp;
     sprintf(str, "C0 = %.2f pF", 1e12*C0);
     FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 200, 100, str);
     sCalib=1;
     LCD_FillRect(LCD_MakePoint(10,180),LCD_MakePoint(440,215),BackGrColor);
     FONT_Write(FONT_FRAN, TextColor, BackGrColor, 10, 180, "Now insert the Quartz");
-    Sleep(2000);
+    Sleep(20);
     TEXTBOX_InitContext(&Quartz_ctx);
     TEXTBOX_Append(&Quartz_ctx, (TEXTBOX_t*)tb_menuQuartz2);
     TEXTBOX_DrawContext(&Quartz_ctx);
 }
 
+float QuMeasLs(uint32_t frequency)
+{
+float LsL, LsH,Ls1;
+float complex rx, rx0;
+uint32_t fstart, freq1, deltaF;
+
+    if(frequency==0)
+    {
+
+        freq1=Fs-200;
+        DSP_Measure(freq1, 1, 1, 5); //Fake initial run to let the circuit stabilize
+        rx0 = DSP_MeasuredZ();
+        Sleep(20);
+
+        DSP_Measure(freq1, 1, 1, 5);
+        rx0 = DSP_MeasuredZ();
+        LsL= cimagf(rx0);
+
+        freq1=Fs+200;
+        DSP_Measure(freq1, 1, 1, 5); //Fake initial run to let the circuit stabilize
+        rx0 = DSP_MeasuredZ();
+        Sleep(20);
+
+        DSP_Measure(freq1, 1, 1, 5);
+        rx0 = DSP_MeasuredZ();
+        LsH = cimagf(rx0);
+        return Ls1=(LsH-LsL)/(4.0*PI*400.0);
+    }
+    else    // frequency!=0
+     {
+        freq1=frequency-100000;
+        DSP_Measure(freq1, 1, 1, 5); //Fake initial run to let the circuit stabilize
+        rx0 = DSP_MeasuredZ();
+        Sleep(20);
+
+        DSP_Measure(freq1, 1, 1, 5);
+        rx0 = DSP_MeasuredZ();
+        LsL= cimagf(rx0);
+
+        freq1=frequency+100000;
+        DSP_Measure(freq1, 1, 1, 5); //Fake initial run to let the circuit stabilize
+        rx0 = DSP_MeasuredZ();
+        Sleep(20);
+
+        DSP_Measure(freq1, 1, 1, 5);
+        rx0 = DSP_MeasuredZ();
+        LsH = cimagf(rx0);
+        return Ls1=(LsH-LsL)/(4.0*PI*200000.0);
+    }
+
+}
+static void ScanFsFp(void){
+char str[100];
+float complex rx;
+float impedance, newX, oldX, MaxX, absX;
+uint32_t i, k, sel, imax;
+uint32_t fstart, freq1, dF;
+int Fq1found=0,Fq2Found=0;
+    fstart=Fs-10000;
+    dF=100;
+    freq1 = fstart;
+    DSP_Measure(freq1, 1, 1, 7);
+
+    for(i = 0; i <= 1000/*WWIDTH*/; i++)
+    {
+        Sleep(5);
+        freq1 = fstart + (i * dF);
+        DSP_Measure(freq1, 1, 1, 3);
+        rx = DSP_MeasuredZ();
+
+        //phi=DSP_MeasuredPhaseDeg();
+        phi1=atan2(cimagf(rx),crealf(rx))*180.0/PI;
+
+        if(phi1>-75.0&&phi1<=-60.0 && !Fq1found) //cimagf(0.0-5.0*I))
+        {
+            fstart=freq1-i*10;
+            dF=10;
+            //Sleep(1000);
+        }
+        if(phi1>-60.0 && !Fq1found) //cimagf(0.0-5.0*I))
+        {
+            fstart=freq1-i;
+            dF=1;
+            //Sleep(1000);
+        }
+        if(phi1>=-45.0&&!Fq1found)
+        {
+            Fq1=freq1;
+            XL1=cimagf(rx);
+            Fq1found=1;
+
+            fstart=freq1-i*10;
+            dF=10;
+
+        sprintf(str, "phi = %.1f°  F1=%.3f",phi1,Fq1/1000.0);
+        FONT_Write(FONT_FRAN, TextColor, BackGrColor, 180, 140, str);
+        sprintf(str, "R= %.1f X= %.1f",crealf(rx),cimagf(rx));
+        FONT_Write(FONT_FRAN, TextColor, BackGrColor, 180, 160, str);
+
+        }
+
+        if(cimagf(rx)>=0.0) //cimagf(0.0))
+        {
+            Fs=freq1;
+            Rs=crealf(rx);
+        /*  sprintf(str, "Rs = %.1f Ohm", Rs);
+            FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 20, 180, str);
+            Sleep(2000);
+            FONT_Write(FONT_FRANBIG, BackGrColor, BackGrColor, 20, 180, str);
+        */
+        }
+        if(((cimagf(rx)>=-100.0)&&(cimagf(rx)<-10.0)&& Fq1found)) //cimagf(0.0-5.0*I))
+        {
+            fstart=freq1-i*10;
+            dF=10;
+        }
+        if(cimagf(rx)>=-10.0) //cimagf(0.0-5.0*I))
+        {
+            fstart=freq1-i;
+            dF=1;
+        }
+        LCD_SetPixel(LCD_MakePoint(X0 + i/2, 135), LCD_BLUE);// progress line
+        //LCD_SetPixel(LCD_MakePoint(X0 + i/2, 136), LCD_BLUE);
+        //sprintf(str, "X = %.3f      ", cimagf(rx));
+        //FONT_Write(FONT_FRAN, TextColor, BackGrColor, 0, 140, str);
+        sprintf(str, "Fs = %.3f     ", freq1/1000.0);
+        FONT_Write(FONT_FRAN, TextColor, BackGrColor, 0, 160, str);
+        sprintf(str, "dF = %d  R= %.1f X= %.1f    ", dF,crealf(rx),cimagf(rx));
+        FONT_Write(FONT_FRAN, TextColor, BackGrColor, 0, 180, str);
+        sprintf(str, "i = %d    ", i);
+        FONT_Write(FONT_FRAN, TextColor, BackGrColor, 0, 200, str);
+        sprintf(str, "phi = %.1f°    ",phi1);
+        FONT_Write(FONT_FRAN, TextColor, BackGrColor, 60, 200, str);
+        if(cimagf(rx)>=0.0) //cimagf(0.0))
+            break;
+    }
+    Sleep(10);
+    dF=10;
+    fstart=freq1;
+     for(i = 0; i <= 1000; i++)
+    {
+        Sleep(5);
+        freq1 = fstart + (i * dF);
+        DSP_Measure(freq1, 1, 1, 3);
+        rx = DSP_MeasuredZ();
+
+        //phi=DSP_MeasuredPhaseDeg();
+        phi1=atan2(cimagf(rx),crealf(rx))*180.0/PI;
+/*
+        if(phi1>=30.0) //cimagf(0.0-5.0*I))
+        {
+            fstart=freq1-i;
+            dF=1;
+        }
+*/
+        if(phi1>=20.0) //cimagf(0.0-5.0*I))
+        {
+            fstart=freq1-i*10;
+            dF=10;
+        }
+
+        if(phi1>=30.0) //cimagf(0.0-5.0*I))
+        {
+            fstart=freq1-i;
+            dF=1;
+        }
+
+
+        if(phi1>=45.0)
+        {
+            Fq2=freq1;
+            XL2=cimagf(rx);
+            sprintf(str, "phi = %.1f°  F2=%.3f",phi1,Fq2/1000.0);
+            FONT_Write(FONT_FRAN, TextColor, BackGrColor, 180, 180, str);
+            sprintf(str, "R= %.1f X= %.1f",crealf(rx),cimagf(rx));
+            FONT_Write(FONT_FRAN, TextColor, BackGrColor, 180, 200, str);
+        }
+        sprintf(str, "X = %.3f      ", cimagf(rx));
+        FONT_Write(FONT_FRAN, TextColor, BackGrColor, 0, 140, str);
+        sprintf(str, "Fs = %.3f     ", freq1/1000.0);
+        FONT_Write(FONT_FRAN, TextColor, BackGrColor, 0, 160, str);
+        sprintf(str, "dF = %d  R= %.1f X= %.1f    ", dF,crealf(rx),cimagf(rx));
+        FONT_Write(FONT_FRAN, TextColor, BackGrColor, 0, 180, str);
+        sprintf(str, "i = %d   ", i);
+        FONT_Write(FONT_FRAN, TextColor, BackGrColor, 0, 200, str);
+        sprintf(str, "phi = %.1f°  ",phi1);
+        FONT_Write(FONT_FRAN, TextColor, BackGrColor, 60, 200, str);
+
+        if(phi1>=45.0)
+            break;
+    }
+
+    Sleep(5);
+
+    fstart=Fp-1000;
+    //fstart=Fs+1000;
+    dF=100;
+    freq1 = fstart;
+    DSP_Measure(freq1, 1, 1, 1);
+    int hiimpednce=0;
+    for(i = 0; i <= WWIDTH; i++)
+    {
+        Sleep(5);
+        freq1 = fstart +  (i * dF);//* deltaF;
+        DSP_Measure(freq1, 1, 1, 3);
+        rx = DSP_MeasuredZ();
+
+        //impedance = cimagf(rx)*cimagf(rx)+crealf(rx)*crealf(rx);
+        //impedance=sqrtf(impedance);
+
+        if(cimagf(rx)<=0.0&&crealf(rx)>100000.0) //cimagf(0.0))
+        {
+            Fp=freq1;
+        }
+        LCD_SetPixel(LCD_MakePoint(X0 + i/2+200, 135), LCD_BLUE);// progress line
+        //LCD_SetPixel(LCD_MakePoint(X0 + i/2+200, 136), LCD_BLUE);
+        sprintf(str, "|Z| = %.3f      ", impedance);
+        FONT_Write(FONT_FRAN, TextColor, BackGrColor, 300, 40, str);
+        sprintf(str, "Fp = %.3f     ", freq1/1000.0);
+        FONT_Write(FONT_FRAN, TextColor, BackGrColor, 300, 60, str);
+        sprintf(str, "dF = %d     ", dF);
+        FONT_Write(FONT_FRAN, TextColor, BackGrColor, 300, 80, str);
+        sprintf(str, "i = %d    ", i);
+        FONT_Write(FONT_FRAN, TextColor, BackGrColor, 300, 100, str);
+        if(crealf(rx)>100000.0/*impedance>500.0*/&&hiimpednce==0) //cimagf(0.0-5.0*I))
+        {
+            fstart=freq1-i*10;
+            dF=10;
+            hiimpednce=1;
+        }
+
+        if(cimagf(rx)<=0.0/*&&impedance>5000.0*/) //cimagf(0.0))
+            break;
+    }
+    Sleep(100);
+    fstart=Fp-100;
+    hiimpednce=0;
+    dF=10;
+    freq1 = fstart;
+    DSP_Measure(freq1, 1, 1, 1);
+    for(i = 0; i <= WWIDTH; i++)
+    {
+        Sleep(5);
+        freq1 = fstart +  (i * dF);//* deltaF;
+        DSP_Measure(freq1, 1, 1, 3);
+        rx = DSP_MeasuredZ();
+
+        //impedance = cimagf(rx)*cimagf(rx)+crealf(rx)*crealf(rx);
+        //impedance=sqrtf(impedance);
+
+        if(cimagf(rx)<=0.0&&crealf(rx)>100000.0) //cimagf(0.0))
+        {
+            Fp=freq1;
+        }
+        LCD_SetPixel(LCD_MakePoint(X0 + i/2+200, 135), LCD_BLUE);// progress line
+        LCD_SetPixel(LCD_MakePoint(X0 + i/2+200, 136), LCD_BLUE);
+        sprintf(str, "|Z| = %.3f      ", impedance);
+        FONT_Write(FONT_FRAN, TextColor, BackGrColor, 300, 40, str);
+        sprintf(str, "Fp = %.3f     ", freq1/1000.0);
+        FONT_Write(FONT_FRAN, TextColor, BackGrColor, 300, 60, str);
+        sprintf(str, "dF = %d     ", dF);
+        FONT_Write(FONT_FRAN, TextColor, BackGrColor, 300, 80, str);
+        sprintf(str, "i = %d    ", i);
+        FONT_Write(FONT_FRAN, TextColor, BackGrColor, 300, 100, str);
+
+        if(crealf(rx)>100000.0/*impedance>500.0*/&&hiimpednce==0) //cimagf(0.0-5.0*I))
+        {
+            fstart=freq1-i;
+            dF=1;
+            hiimpednce=1;
+        }
+
+        if(cimagf(rx)<=0.0/*&&impedance>100000.0*/) //cimagf(0.0))
+            break;
+    }
+    //GEN_SetMeasurementFreq(0);
+    isMeasured = 1;
+    Sleep(1);
+}
+////////////
+uint32_t QuFindPositivX(BANDSPAN bs)
+{
+uint64_t j,k;
+float R, X;
+float complex  rx0;
+uint32_t FSres,fstart1;
+BANDSPAN span_old;
+
+    span_old=span;
+    span=bs;
+    //f1=1000000;
+    //fstart1 = BSVALUES[bs] * 1000;
+    for(j=0;j<100;j++) // 100kHz +1MHz step
+    {
+        fstart1=100000+j*BSVALUES[bs] * 1000;
+        f1 = fstart1;
+        FONT_Print(FONT_FRAN, TextColor, BackGrColor, 0, 80, "j=%d  ", j);
+        FONT_Print(FONT_FRAN, TextColor, BackGrColor, 0, 100, "f1=%d  ", fstart1/1000);
+        while(TOUCH_IsPressed());
+
+        ScanRXFast();
+        //Sleep(200);
+        for(k = 0; k <= WWIDTH; k++)
+            {
+                FSres = fstart1 + (k * BSVALUES[span] * 1000) / WWIDTH;
+                rx0=values[k];
+
+                if(/*crealf(rx0)>10.0&&*/cimagf(rx0)>100.0)
+                {
+                    span=span_old;
+                    FONT_Print(FONT_FRAN, TextColor, BackGrColor, 0, 200, "Fr %d  ", FSres/1000);
+                    Sleep(20);
+                    FONT_Print(FONT_FRAN, BackGrColor, BackGrColor, 0, 200, "Fr %d  ", FSres/1000);
+                    Q_Fs_find=1;
+                    break;//return(FSres);
+                }
+            }
+            if(Q_Fs_find)  // find fine
+                {
+                    fstart1=FSres-30000;
+                    f1 = fstart1;
+                    span=BS40;
+                    ScanRXFast();
+                    for(k = 0; k <= WWIDTH; k++)
+                        {
+                            FSres = fstart1 + (k * BSVALUES[span] * 1000) / WWIDTH;
+                            rx0=values[k];
+
+                            if(/*crealf(rx0)>10.0&&*/cimagf(rx0)>10.0)
+                            {
+                                span=span_old;
+                                FONT_Print(FONT_FRAN, TextColor, BackGrColor, 0, 200, "Fr %d  ", FSres/1000);
+                                Sleep(2000);
+                                FONT_Print(FONT_FRAN, BackGrColor, BackGrColor, 0, 200, "Fr %d  ", FSres/1000);
+                                Q_Fs_find=1;
+                                return(FSres);
+                            }
+                        }
+                }
+
+
+
+        FONT_Print(FONT_FRAN, TextColor, BackGrColor, 0, 140, "F=%d  ", FSres/1000);
+    }
+    span=span_old;
+}
+
 void QuMeasure(void){
-int i;
-char str[10];
-float Cs,Ls,Q;
+//int i;
+char str[100];
+    Fs=Fp=Fq1=Fq2=0;
 
     if(sFreq==0) {
-        FONT_Write(FONT_FRAN, TextColor, BackGrColor, 10, 50, "First set estimated Frequency ");
-        Sleep(2000);
+        FONT_Write(FONT_FRAN, TextColor, BackGrColor, 10, 100, "First set estimated Frequency ");
+        Sleep(20);
         return;
     }
-    else    FONT_Write(FONT_FRAN, TextColor, BackGrColor, 10, 50, "                                   ");
-    if(sCalib==0) {
-        FONT_Write(FONT_FRAN, TextColor, BackGrColor, 10, 50, "First do Calibration without quartz");
-        Sleep(2000);
-        return;
-    }
-    else    FONT_Write(FONT_FRAN, TextColor, BackGrColor, 10, 50, "                                         ");
-    LCD_FillRect(LCD_MakePoint(10,180),LCD_MakePoint(440,215),BackGrColor);
-    if(span>BS1000) span=BS1000;// maximum: 1 MHz
-    //test((char) span);//Testpunkt
-    ScanRX(0);
-    Cp-=C0;
-    sprintf(str, "Cp = %.2f  ", 1e12*Cp);
-    FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 200, 140, str);
-    sprintf(str, "Fs = %d  ", Fs);
-    FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 200, 60, str);
-    sprintf(str, "Fp = %d  ", Fp);
-    FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 200, 100, str);
+    else FONT_Write(FONT_FRAN, BackGrColor, BackGrColor, 10, 100, "First set estimated Frequency ");
 
-    Sleep(2000);
-    DrawGrid(GRAPH_RX);
-    DrawRX(1,0);
-    Sleep(2000);
-    span=BS10;// second measurement
-    f1=Fs;
-    ScanRX(0);
-    Cp-=C0;
-    LCD_FillAll(BackGrColor);// LCD_BLACK WK
-    FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 150, 20, "Quartz Data ");
-    sprintf(str, "Fs = %d  ", Fs);
+    if(sCalib==0) {
+        FONT_Write(FONT_FRAN, TextColor, BackGrColor, 10, 100, "First do Calibration without quartz");
+        Sleep(20);
+        return;
+    }
+    else    FONT_Write(FONT_FRAN, BackGrColor, BackGrColor, 10, 100, "First do Calibration without quartz");
+    LCD_FillRect(LCD_MakePoint(0,65),LCD_MakePoint(479,215),BackGrColor);
+    if(!Q_Fs_find)
+        f1=(QuFindPositivX(BS400)/1000)*1000-8000;//1000)*1000;
+        //f1=(QuFindBigR(BS2M)/1000)*1000-5000;//1000)*1000;
+    //span=BS40;
+    ScanRX_QuFast();
+    Cp=Get_C()-C0;
+    //Cp-=C0;
+    grType = GRAPH_VSWR_Z;
+    RedrawWindow();
+
+    sprintf(str, "Fs = %.3f  ", Fs/1000.0);
+    FONT_Write(FONT_FRAN, TextColor, BackGrColor, 40, 60, str);
+    sprintf(str, "Fp = %.3f  ", Fp/1000.0);
+    FONT_Write(FONT_FRAN, TextColor, BackGrColor, 300, 60, str);
+
+    //f1=((Fs/1000)-1)*1000;
+    ScanFsFp();
+    //Cp=Get_C()-C0;
+    //Cp-=C0;
+    LCD_FillAll(BackGrColor);
+    FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 150, 0, "Quartz Data ");
+    sprintf(str, "Fs = %.3f  ", Fs/1000.0);
     FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 20, 60, str);
-    sprintf(str, "Fp = %d  ", Fp);
+    sprintf(str, "Fp = %.3f  ", Fp/1000.0);
     FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 240, 60, str);
     if(Fs!=0){
         sprintf(str, "Cp = %.2f pF ", 1e12*Cp);
         FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 240, 100, str);
 
         if(Fp!=0){
-            Cs=2.0f*Cp*(Fp-Fs)/Fs;
+            Ls1=QuMeasLs(0);
+            Ls2=(XL2-XL1)/(4*PI*(Fq2-Fq1));  //dX/dF at +-45°
+            //Cs=2.0f*Cp*(Fp-Fs)/Fs;
+            Cs=1.0/(Ls1*39.478f*Fs*Fs);
             sprintf(str, "Cs = %.4f pF ", 1e12*Cs);
             FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 20, 100, str);
             Ls=1/(Cs*39.478f*Fs*Fs);
-            sprintf(str, "Ls = %.1f mH ", 1e3*Ls);
+            sprintf(str, "Ls1 = %.1f mH    ", 1e3*Ls1);
             FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 20, 140, str);
+            sprintf(str, "Ls2 = %.1f mH    ", 1e3*Ls2);
+            FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 240, 140, str);
             sprintf(str, "Rs = %.1f Ohm", Rs);
             FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 20, 180, str);
-            Q=(1/Rs)*sqrtf(Ls/Cs);
+            //Q=(1/Rs)*sqrtf(Ls1/Cs);
+            Q=2*PI*Fs*Ls1/Rs;
             sprintf(str, "Q = %.0f   ", Q);
             FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 240, 180, str);
+            //sprintf(str, "Ls1 = %.1f mH ", 1e3*Ls1);
+            //FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 240, 140, str);
         }
     }
-    Sleep(4000);
+    Sleep(10);
     TEXTBOX_InitContext(&Quartz_ctx);
     TEXTBOX_Append(&Quartz_ctx, (TEXTBOX_t*)tb_menuQuartz2);
     TEXTBOX_DrawContext(&Quartz_ctx);
-    while(!TOUCH_IsPressed());
+    //while(!TOUCH_IsPressed());
    // rqExitSWR=true;
+
+    QuAddToFile();
+
+}
+void QuSetFequency(void)
+{
+    //fxs=CFG_GetParam(CFG_PARAM_PAN_F1);
+    fxkHzs=fxs/1000;
+
+    if(SetFreqKBD(CFG_PARAM_MEAS_F,&fxkHzs, &span))
+    {
+    fxs=CFG_GetParam(CFG_PARAM_MEAS_F);
+    }
+    f1=fxs;
+    //FG_Flush();
+    ShowMeasFr();
+    sFreq=1;
+    Q_Fs_find=1;
 }
 
-void Quartz_proc(void){
-char str[20];
-uint32_t width, vswLog=0;
-uint32_t k;
 
-    if(span==0) span=BS1000;// +- 500 kHz
-    sFreq=0;
+void Quartz_proc(void){
+int screen=0;
+char str[200];
+uint32_t width, vswLog=0;
+//uint32_t k;
+//float Cs,Ls,Q;
+
+    qu_num=0;
+    strcpy (filebuffer,"\n--------------------------------begin---------------------------------------\n");
+   /* strcat (filebuffer,"1---------------------------------------------------------------------------\n");
+    strcat (filebuffer,"2---------------------------------------------------------------------------\n");
+    strcat (filebuffer,"3---------------------------------------------------------------------------\n");
+    strcat (filebuffer,"4---------------------------------------------------------------------------\n");
+    strcat (filebuffer,"5---------------------------------------------------------------------------\n");
+    strcat (filebuffer,"6---------------------------------------------------------------------------\n");
+    strcat (filebuffer,"7---------------------------------------------------------------------------\n");
+    strcat (filebuffer,"8---------------------------------------------------------------------------\n");
+    strcat (filebuffer,"9---------------------------------------------------------------------------\n");
+    strcat (filebuffer,"10--------------------------------------------------------------------------\n");*/
+    sprintf(str, "Nr    Fs        Fp        Q         Ls          Cs          Rs          Cp \n");
+    strcat (filebuffer,str);
+    f1=200000;
+    Q_Fs_find=0;
+    span=BS40;
+    sFreq=1;
     sCalib=0;
     freqChg=0;
     rqExitSWR=false;
     SetColours();
     LCD_FillAll(BackGrColor);
-    FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 150, 10, "Quartz Data ");
-    Sleep(1000);
+    FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 150, 0, "Quartz Data ");
+    //Sleep(1000);
     while(TOUCH_IsPressed());
     fxs=CFG_GetParam(CFG_PARAM_MEAS_F);
     fxkHzs=fxs/1000;
-    ShowFr();
+    ShowMeasFr();
     TEXTBOX_InitContext(&Quartz_ctx);
 
 //HW calibration menu
@@ -2544,7 +3253,67 @@ uint32_t k;
     TEXTBOX_DrawContext(&Quartz_ctx);
 for(;;)
     {
-        Sleep(0); //for autosleep to work
+        if (TOUCH_Poll(&pt))
+        {
+            if((pt.x>160)&&(pt.x<320)&&(pt.y<50)&&isMeasured==1)
+                {
+                    if(screen==0)
+                    {
+                        screen=1;
+                        //f1=CFG_GetParam(CFG_PARAM_MEAS_F);
+                        grType = GRAPH_VSWR_Z;
+                        RedrawWindow();
+
+                        sprintf(str, "Fs = %.3f", Fs/1000.0);
+                        FONT_Write(FONT_FRAN, TextColor, BackGrColor, 20, 180, str);
+                        sprintf(str, "Fp = %.3f     ", Fp/1000.0);
+                        FONT_Write(FONT_FRAN, TextColor, BackGrColor, 350, 0, str);
+                        sprintf(str, "F1=%.3f F2=%.3f",Fq1/1000.0,Fq2/1000.0);
+                        FONT_Write(FONT_FRAN, TextColor, BackGrColor, 120, 200, str);
+/*
+                        sprintf(str, "phi = %.1f°  F1=%.3f",phi1,Fq1/1000.0);
+                        FONT_Write(FONT_FRAN, TextColor, BackGrColor, 180, 140, str);
+
+                        sprintf(str, "phi = %.1f°  F2=%.3f",phi1,Fq2/1000.0);
+                        FONT_Write(FONT_FRAN, TextColor, BackGrColor, 180, 180, str);
+*/
+                    }
+                    else
+                    {
+                        screen=0;
+                        LCD_FillAll(BackGrColor);// LCD_BLACK WK
+                        FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 150, 0, "Quartz Data ");
+                        sprintf(str, "Fs = %.3f  ", Fs/1000.0);
+                        FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 20, 60, str);
+                        sprintf(str, "Fp = %.3f  ", Fp/1000.0);
+                        FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 240, 60, str);
+                        if(Fs!=0)
+                            {
+                            sprintf(str, "Cp = %.2f pF ", 1e12*Cp);
+                            FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 240, 100, str);
+
+                            if(Fp!=0)
+                                {
+                                sprintf(str, "Cs = %.4f pF ", 1e12*Cs);
+                                FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 20, 100, str);
+                                sprintf(str, "Ls1 = %.1f mH    ", 1e3*Ls1);
+                                FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 20, 140, str);
+                                sprintf(str, "Ls2 = %.1f mH    ", 1e3*Ls2);
+                                FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 240, 140, str);
+                                sprintf(str, "Rs = %.1f Ohm", Rs);
+                                FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 20, 180, str);
+                                sprintf(str, "Q = %.0f   ", Q);
+                                FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 240, 180, str);
+                                }
+                            }
+                        FONT_Print(FONT_FRANBIG, TextColor, BackGrColor, 0, 0, "Qu %d  ", qu_num);
+                        FONT_Print(FONT_FRAN, TextColor, BackGrColor, 0, 30, "lenght: %d   ",strlen(filebuffer));
+                        TEXTBOX_DrawContext(&Quartz_ctx);
+                    }
+                while(TOUCH_IsPressed());
+                }
+        }
+        //Sleep(0); //for autosleep to work
         if (TEXTBOX_HitTest(&Quartz_ctx))
         {
             if (rqExitSWR)
@@ -2552,18 +3321,236 @@ for(;;)
                 rqExitSWR=false;
                 return;
             }
-            if(freqChg==1){
-               ShowFr();
-               freqChg=0;
+            if(freqChg==1)
+            {
+                ShowMeasFr();
+                freqChg=0;
             }
-            Sleep(50);
+            // Sleep(50);
         }
-        k++;
-        if(k>=5){
-            k=0;
-
-
-        }
-        Sleep(5);
+        Sleep(20);
     }
 }
+
+TEXTBOX_CTX_t MeasCx_ctx;
+void C0Calibrate(void){
+    sCalib=0;
+    //CxGet();//only compute C0
+    ///////////////
+char str[100];
+float complex rx0;
+uint32_t freq1;
+
+    freq1=CFG_GetParam(CFG_PARAM_MEAS_F);;
+    span=BS2;
+    DSP_Measure(freq1, 1, 1, 3); //Fake initial run to let the circuit stabilize
+    rx0 = DSP_MeasuredZ();
+    Sleep(20);
+
+    DSP_Measure(freq1, 1, 1, 5);
+
+    rx0 = DSP_MeasuredZ();
+
+float r= fabsf(crealf(rx0));//calculate Cx
+float im= cimagf(rx0);
+ /*   if(im=0){
+        Cp=0;
+        Lp=0;
+        return;
+    }*/
+
+float xp=1.0f;
+    if(im*im>0.0025)
+        xp=im+r*(r/im);// else xp=im=-10000.0f;// ??
+
+    if(sCalib==0)
+        {
+            C0=-1/( 6.2832 *freq1* xp)-(1*1e-14);
+            sCalib=1;
+        }
+    else
+        {
+            Cx=-1/( 6.2832 *freq1* xp);
+        if(Cx>C0) //Capacitance
+            {
+                Cx=-1/( 6.2832 *freq1* xp)-C0;
+                Lp=0.0;
+            }
+        else//xp>0 Inductance
+            {
+                Cx=0.0;
+                Lp=xp/( 6.2832 *freq1)+C0;
+            }
+        }
+    sprintf(str, "Craw = %.2f pF     ", 1e12*-1/( 6.2832 *freq1* xp));
+    //FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 200, 80, str);
+
+    Sleep(20);
+
+    //FONT_Write(FONT_FRAN, LCD_RED, LCD_BLACK, 400, 0, "     ");
+    GEN_SetMeasurementFreq(0);
+    isMeasured = 1;
+    //CxGet();//
+    //////////////
+
+    //C0=Cp;
+    sprintf(str, "Co = %.2f pF", 1e12*C0);
+    //FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 200, 120, str);
+    //sCalib=1;
+    //LCD_FillRect(LCD_MakePoint(10,180),LCD_MakePoint(440,215),BackGrColor);
+    //Sleep(2000);
+    //TEXTBOX_InitContext(&MeasCx_ctx);
+    //TEXTBOX_Append(&MeasCx_ctx, (TEXTBOX_t*)tb_menuMeasCx);
+    //TEXTBOX_DrawContext(&MeasCx_ctx);
+    while(TOUCH_IsPressed());
+}
+
+void CxMeasure(void){
+int i;
+char str[100];       //////  Е тука таа дължина  на масива беше 10 и ебаваше майката на стека STACK
+float complex rx0;
+float impedance,R,X,phi;
+
+uint32_t freq1;
+
+    freq1=CFG_GetParam(CFG_PARAM_MEAS_F);
+    //span=BS2;
+
+    DSP_Measure(freq1, 1, 1, 3); //Fake initial run to let the circuit stabilize
+    rx0 = DSP_MeasuredZ();
+    Sleep(20);
+
+    DSP_Measure(freq1, 1, 1, 5);
+
+    rx0 = DSP_MeasuredZ();
+
+float r= fabsf(crealf(rx0));//calculate Cx
+float im= cimagf(rx0);
+ /*   if(im=0){
+        Cp=0;
+        Lp=0;
+        return;
+    }*/
+
+float xp=1.0f;
+    if(im*im>0.0025)
+        xp=im+r*(r/im);// else xp=im=-10000.0f;// ??
+
+    if(sCalib==0)
+        {
+            C0=-1/( 6.2832 *freq1* xp);
+            sCalib=1;
+        }
+    else
+        {
+            Cx=-1/( 6.2832 *freq1* xp);
+        if(Cx>C0) //Capacitance
+            {
+                Cx=-1/( 6.2832 *freq1* xp)-C0;
+                if(Cx<0)
+                     Cx=0;
+                Lp=0.0;
+            }
+        else//xp>0 Inductance
+            {
+                Cx=0.0;
+                Lp=xp/( 6.2832 *freq1)+C0;
+                if(Lp<0|Lp>1)   //  0--1000 mH
+                    Lp=0;
+            }
+        }
+    impedance = cimagf(rx0)*cimagf(rx0)+crealf(rx0)*crealf(rx0);
+    impedance=sqrtf(impedance);
+    //phi=DSP_MeasuredPhaseDeg();
+    phi=atan2(cimagf(rx0),crealf(rx0))*180.0/PI;
+
+    Q=0.0;
+    R = crealf(rx0);
+    X = cimagf(rx0);
+    if(R!=0&&X>0.0)
+        Q=X/R;
+
+    FONT_Print(FONT_FRANBIG, TextColor, BackGrColor, 5, 155, "Cx = %.2f pF", 1e12*Cx);
+    FONT_Print(FONT_FRANBIG, TextColor, BackGrColor, 5, 195, "Lx = %.2f uH  Q = %.1f ", 1e6*Lp,Q);
+
+    FONT_Print(FONT_FRANBIG, TextColor, BackGrColor, 5, 115, "|Z| = %.1f ohm Phi = %.1f°",impedance,phi);
+    FONT_Print(FONT_FRANBIG, TextColor, BackGrColor, 5, 75, "R = %.1f ohm X = %.1f ohm",R,X);
+}
+
+
+void CxMeas_Proc(void){
+uint32_t width, vswLog=0;
+uint32_t k;
+
+    //if(span==0)
+    //span=BS2;// +- 500 kHz
+    sFreq=0;
+    sCalib=0;
+    freqChg=0;
+    rqExitSWR=false;
+    //SetColours();
+    LCD_FillAll(BackGrColor);
+    FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 145, 0, "Measure Cx Lx ");
+   // Sleep(2000);
+    while(TOUCH_IsPressed());
+    fxs=CFG_GetParam(CFG_PARAM_MEAS_F);
+    fxkHzs=fxs/1000;
+    //C0Calibrate();
+    ShowMeasFr();
+   //Sleep(2000);
+    TEXTBOX_InitContext(&MeasCx_ctx);
+    //Sleep(50);
+//HW calibration menu
+    TEXTBOX_Append(&MeasCx_ctx, (TEXTBOX_t*)tb_menuMeasCx);
+    //Sleep(50);
+    TEXTBOX_DrawContext(&MeasCx_ctx);
+    //Sleep(5000);
+    LCD_SetLayer_0();
+
+    LCD_FillAll(BackGrColor);
+    //Sleep(1000);
+    FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 145, 0, "Measure Cx Lx ");
+    ShowMeasFr();
+    TEXTBOX_DrawContext(&MeasCx_ctx);
+    //Sleep(2000);
+    LCD_SetLayer_1();
+    FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 145, 0, "Measure Cx Lx ");
+    ShowMeasFr();
+    TEXTBOX_DrawContext(&MeasCx_ctx);
+for(;;)
+    {
+        if(BSP_LCD_GetActiveLayer())
+            LCD_SetLayer_0();
+        else
+            LCD_SetLayer_1();
+        LCD_FillRect(LCD_MakePoint(0,60),LCD_MakePoint(479,230),BackGrColor);
+
+        Sleep(0); //for autosleep to work
+        if (TEXTBOX_HitTest(&MeasCx_ctx))
+            {
+                if (rqExitSWR)
+                    {
+                        rqExitSWR=false;
+                        //LCD_FillAll(BackGrColor);
+                        while (TOUCH_IsPressed());
+                        //Sleep(100);
+                        LCD_SetLayer_0();
+                        LCD_FillAll(BackGrColor);
+                        LCD_SetLayer_1();
+                        LCD_FillAll(BackGrColor);
+                        LCD_ResetLayer();
+                        return;
+                    }
+                fxs=CFG_GetParam(CFG_PARAM_MEAS_F);
+                fxkHzs=fxs/1000;
+            }
+        if(sCalib==1)
+        {
+            CxMeasure();
+        }
+        ShowMeasFr();
+        Sleep(20);
+
+    }
+}
+

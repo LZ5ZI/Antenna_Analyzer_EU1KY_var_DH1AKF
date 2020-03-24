@@ -18,7 +18,7 @@
 #include "num_keypad.h"
 #include "panfreq.h"
 #include "generator.h"
-#include "BeepTimer.h"
+#include "FreqCounter.h"
 
 extern uint32_t BackGrColor;
 extern uint32_t TextColor;
@@ -40,9 +40,9 @@ void Sleep(uint32_t ms);
 
 static void ShowF()
 {
-char str[20] = "";
+char str[100] = "";
 uint8_t i,j;
-    FONT_ClearHalfLine(FONT_FRANBIG, BackGrColor, 72);// WK
+    FONT_ClearHalfLine(FONT_FRANBIG, BackGrColor, 50);// WK
     sprintf(str, "F: %#u MHz", (unsigned int)(CFG_GetParam(CFG_PARAM_GEN_F) ));
     for(i=3;i<15;i++){
         if(str[i]==' ') break;// search space before "MHz"
@@ -56,7 +56,7 @@ uint8_t i,j;
     str[i-6]='.';
     str[i-2]=' ';
     str[i+6]=0;
-    FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 0, 72, str );
+    FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 0, 50, str );
 }
 
 static void GENERATOR_SwitchWindow(void)
@@ -272,7 +272,7 @@ static const struct HitRect GENERATOR_hitArr[] =
 {
     //        x0,  y0, width, height, callback
     HITRECT(   0, 233,  80, 38, GENERATOR_SwitchWindow),//200
-    HITRECT(  85, 233, 135, 38, GENERATOR_SetFreq),
+    HITRECT(  100, 233, 135, 38, GENERATOR_SetFreq),
    // HITRECT( 220, 233, 100, 38, GENERATOR_ChgColrs),
     HITRECT( 320, 233, 59, 38, GENERATOR_AM),
     HITRECT( 380, 233, 59, 38, GENERATOR_FM),
@@ -307,14 +307,6 @@ void ShowIncDec1(void){
 
 static DSP_RX rx;
 
-int testGen(void){// wk 21.1.2019
-    GEN_SetMeasurementFreq(3500000ul);
-    Sleep(200);
-    DSP_Measure(0, 1, 0, CFG_GetParam(CFG_PARAM_MEAS_NSCANS));
-    if (DSP_MeasuredMagVmv() > 0.3f) return 0;
-    return -1;
-}
-
 void GENERATOR_Window_Proc(void)
 {
 uint32_t activeLayer, f0;
@@ -343,9 +335,9 @@ GENERATOR_REDRAW:
         LCD_FillAll(BackGrColor);
         ShowHitRect(GENERATOR_hitArr);
         ShowIncDec1();
-        FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 0, 36, "Generator mode");// WK
+        FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 0, 5, "Generator mode");// WK
         FONT_Write(FONT_FRANBIG, CurvColor, BackGrColor, 2, 235, " Exit ");
-        FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 85, 235, "Frequency");
+        FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 105, 235, " Frequency");
         //FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 220, 235, "Colour");
         FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 332, 235, "AM");
         FONT_Write(FONT_FRANBIG, TextColor, BackGrColor, 392, 235, "FM");
@@ -387,16 +379,16 @@ GENERATOR_REDRAW:
                 }
                 speedcnt++;
                 if (speedcnt < 5)
-                    Sleep(500);// WK
+                    Sleep(5);// WK
                 else
-                    Sleep(200);// WK
+                    Sleep(2);// WK
                 if (speedcnt > 50){
                     speedcnt--;
                     f_maxstep = 2000000;
                 }
             }
         }
-        Sleep(50);
+        Sleep(5);
         speedcnt = 0;
         f_maxstep = 500000;
         if (fChanged)

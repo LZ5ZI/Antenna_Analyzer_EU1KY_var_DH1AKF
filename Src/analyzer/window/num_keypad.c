@@ -222,7 +222,7 @@ uint32_t NumKeypad(uint32_t initial, uint32_t min_value, uint32_t max_value, con
     {
         if (TEXTBOX_HitTest(&keybd_ctx))
         {
-            Sleep(50);
+            Sleep(5);
         }
         if (kbdRqExit)
             break;

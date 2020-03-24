@@ -10,5 +10,6 @@
 extern uint32_t Timer5Value;
 extern uint16_t TimeFlag;
 void Single_Frequency_Proc(void);
-
+void MEASUREMENT_FIncr_500k(void);
+void MEASUREMENT_FDecr_500k(void);
 #endif

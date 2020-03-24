@@ -7,12 +7,10 @@
 
 #ifndef PANVSWR2_H_
 #define PANVSWR2_H_
-// ** WK ** // DL8MBY:
+// ** WK ** :
 typedef enum
 {
-    BS2, BS4, BS10, BS20, BS40, BS100, BS200, BS400, BS1000, BS2M, BS4M,
-BS10M, BS20M, BS30M, BS40M, BS100M, BS200M, BS250M, BS300M, BS350M,
-BS400M, BS450M, BS500M
+    BS1, BS2, BS4, BS10, BS20, BS40, BS100, BS200, BS400, BS1000, BS2M, BS4M, BS10M, BS20M, BS30M, BS40M, BS100M
 } BANDSPAN;
 
 extern const char* BSSTR[];
@@ -33,11 +31,10 @@ void Sleep(uint32_t nms);
 void Tune_SWR_Proc(void);
 
 void Quartz_proc(void);
-uint8_t SWRTone;
+void CxMeas_Proc(void);
+uint8_t AUDIO1;
 static uint8_t loudness;
 void  setup_GPIO(void);
-static int BeepIsActive;
-static int Sel1,Sel2,Sel3;
 
 
 #endif

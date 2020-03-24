@@ -7,6 +7,8 @@
 void TOUCH_Init(void)
 {
     BSP_TS_Init(FT5336_MAX_WIDTH, FT5336_MAX_HEIGHT);
+    //while(BSP_TS_ITConfig() != TS_OK);    \\ Interrup request touch
+
 }
 
 static uint32_t wakeup_touch(void)

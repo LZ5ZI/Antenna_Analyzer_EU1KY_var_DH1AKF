@@ -243,6 +243,7 @@ uint32_t CursorPosition;
         if (TEXTBOX_HitTest(&keybd_ctx))
         {
             Sleep(50);
+            while(TOUCH_IsPressed());
         }
         if (kbdRqExit)
             break;

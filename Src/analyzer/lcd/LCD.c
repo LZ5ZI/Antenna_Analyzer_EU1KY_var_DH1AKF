@@ -32,6 +32,36 @@ static inline int _abs(int a)
     return (a < 0) ? -a : a;
 }
 
+
+void LCD_SetLayer_0(void)
+{
+    BSP_LCD_SelectLayer(0);
+    BSP_LCD_SetTransparency(1, 255);
+    BSP_LCD_SetTransparency(0, 0);
+}
+void LCD_SetLayer_1(void)
+{
+    BSP_LCD_SelectLayer(1);
+    BSP_LCD_SetTransparency(0, 255);
+    BSP_LCD_SetTransparency(1, 0);
+
+}
+void LCD_ResetLayer(void)
+{
+    BSP_LCD_SelectLayer(1);
+    BSP_LCD_SetTransparency(1, 255);
+    BSP_LCD_SetTransparency(0, 255);
+}
+
+void LCD_Layer_OFF(void)
+{
+    BSP_LCD_SetTransparency(BSP_LCD_GetActiveLayer(), 0);
+}
+void LCD_Layer_ON(void)
+{
+    BSP_LCD_SetTransparency(BSP_LCD_GetActiveLayer(), 255);
+}
+
 uint16_t LCD_GetWidth(void)
 {
     return BSP_LCD_GetXSize();
@@ -65,7 +95,8 @@ void LCD_Init(void)
 
     // Initialize LCD
     BSP_LCD_LayerDefaultInit(0, LCD_FB_START_ADDRESS);
-    BSP_LCD_LayerDefaultInit(1, LCD_FB_START_ADDRESS+(BSP_LCD_GetXSize()*BSP_LCD_GetYSize()*4));
+    //BSP_LCD_LayerDefaultInit(1, LCD_FB_START_ADDRESS+(BSP_LCD_GetXSize()*BSP_LCD_GetYSize()*4));
+    BSP_LCD_LayerDefaultInit(1, LCD_FB_START_ADDRESS+ 1024 * 1024 * 4);
 
     // Enable LCD
     BSP_LCD_DisplayOn();
@@ -181,6 +212,52 @@ void LCD_Rectangle(LCDPoint a, LCDPoint b, LCDColor c)
     c |= 0xFF000000ul;
     BSP_LCD_SetTextColor(c);
     BSP_LCD_DrawRect(a.x, a.y, b.x - a.x + 1, b.y - a.y + 1);
+}
+
+void LCD_PolyLine(LCDPoint* points, uint16_t pointCount, LCDColor color)
+{
+    if (pointCount < 2)
+        return;
+
+    LCDPoint lcd_points[pointCount];
+
+    for (int i = 0; i < pointCount; i++)
+    {
+        lcd_points[i].x = points[i].x;
+        lcd_points[i].y = points[i].y;
+        if (lcd_points[i].x >= LCD_GetWidth())
+            lcd_points[i].x = LCD_GetWidth() - 1;
+        if (lcd_points[i].y >= LCD_GetHeight())
+            lcd_points[i].y = LCD_GetHeight() - 1;
+    }
+
+    color |= 0xFF000000ul;
+    BSP_LCD_SetTextColor(color);
+
+    for (int i = 1; i < pointCount; i++)
+    {
+        BSP_LCD_DrawLine(lcd_points[i-1].x, lcd_points[i-1].y,
+                         lcd_points[i].x, lcd_points[i].y);
+    }
+}
+
+void LCD_FillPolygon(LCDPoint* points, uint16_t pointCount, LCDColor color)
+{
+    Point lcd_points[pointCount];
+
+    for (int i = 0; i < pointCount; i++)
+    {
+        lcd_points[i].X = points[i].x;
+        lcd_points[i].Y = points[i].y;
+        if (lcd_points[i].X >= LCD_GetWidth())
+            lcd_points[i].X = LCD_GetWidth() - 1;
+        if (lcd_points[i].Y >= LCD_GetHeight())
+            lcd_points[i].Y = LCD_GetHeight() - 1;
+    }
+
+    color |= 0xFF000000ul;
+    BSP_LCD_SetTextColor(color);
+    BSP_LCD_FillPolygon(lcd_points, pointCount);
 }
 
 void LCD_Line(LCDPoint a, LCDPoint b, LCDColor color)

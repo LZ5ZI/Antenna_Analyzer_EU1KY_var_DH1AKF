@@ -193,11 +193,11 @@ static void Show_F(void)
 
 static void BSPrevHitCb(void)
 {
-    if (_bs == BS2)// ** WK **
+    if (_bs == BS1)// ** WK **
     {
-        _bs = BS500M;// DL8MBY
+        _bs = BS100M;
         if (!IsValidRange())
-            _bs = BS200;// DL8MBY
+            _bs = BS200;
     }
     else
         _bs -= 1;
@@ -206,8 +206,8 @@ static void BSPrevHitCb(void)
 
 static void BSNextHitCb(void)
 {
-    if (_bs == BS500M)//DL8MBY
-        _bs = BS2;// ** WK **
+    if (_bs == BS100M)
+        _bs = BS1;// ** WK **
     else
     {
         _bs += 1;
@@ -334,9 +334,8 @@ uint32_t Save_f1=_f1;
     {
         digit = tb->text[0] - '0';
         k=1;
-        for(i=0; i<CurPos; i++){
+        for(i=0; i<CurPos; i++)
             k=10*k;
-        }
         rest = fkhz%(k);
         fkhz = ((fkhz/(10*k))*10 +digit)*k+rest;
         _f1=fkhz*1000;
@@ -461,7 +460,8 @@ bool PanFreqWindow(uint32_t *pFkhz, BANDSPAN *pBs)
     {
         if (TEXTBOX_HitTest(&fctx))
         {
-            Sleep(50);
+            //Sleep(5);
+            while(TOUCH_IsPressed());
         }
         if(rqDel == 1){
             LCD_Pop();
@@ -481,9 +481,66 @@ bool PanFreqWindow(uint32_t *pFkhz, BANDSPAN *pBs)
             }
             break;
         }
-        Sleep(10);
+        //Sleep(5);
     }
-    Sleep(200);// WK
+    Sleep(5);// WK
+    //while(TOUCH_IsPressed())
+    //    Sleep(0);
+    LCD_Pop(); //Restore last saved LCD bitmap
+
+    return isUpdated;
+}
+bool SetFreqKBD(CFG_PARAM_t param, uint32_t *pFkhz, BANDSPAN *pBs)
+{
+    LCD_Push(); //Store current LCD bitmap
+    LCD_ResetLayer();
+    LCD_FillAll(LCD_BLACK);
+    PanrqExit = 0;
+    rqDel = 0;// WK
+    CurPos=3;
+    _f1 = (*pFkhz)*1000;
+    _bs = *pBs;
+    update_allowed = false;
+    bool isUpdated = false;
+
+    TEXTBOX_CTX_t fctx;
+    TEXTBOX_InitContext(&fctx);
+
+    TEXTBOX_Append(&fctx, (TEXTBOX_t*)tb_pan); //Append the very first element of the list in the flash.
+                                                      //It is enough since all the .next fields are filled at compile time.
+    TEXTBOX_DrawContext(&fctx);
+
+    Show_F();
+    while(TOUCH_IsPressed());
+
+    for(;;)
+    {
+        if (TEXTBOX_HitTest(&fctx))
+        {
+            //Sleep(5);
+            while(TOUCH_IsPressed());
+        }
+        if(rqDel == 1){
+            LCD_Pop();
+            *pFkhz = 0;
+            return false;
+        }
+        if (PanrqExit)
+        {
+            if (update_allowed && ((_f1 != (*pFkhz)*1000) || (_bs != *pBs)))
+            {
+                *pFkhz = _f1/1000;
+                *pBs = _bs;
+                CFG_SetParam(param, _f1);
+                CFG_SetParam(CFG_PARAM_PAN_SPAN, _bs);
+                CFG_Flush();
+                isUpdated = true;
+            }
+            break;
+        }
+        //Sleep(5);
+    }
+    Sleep(5);// WK
     //while(TOUCH_IsPressed())
     //    Sleep(0);
     LCD_Pop(); //Restore last saved LCD bitmap

@@ -7,21 +7,20 @@
 
 #include "hit.h"
 #include "config.h"
-#include "BeepTimer.h"
+#include "FreqCounter.h"
 #include "panvswr2.h"
-
 
 void ShowHitRect(const struct HitRect* r){// WK
 
     while(r->x1!=0xFFFFFFFFul){
-            LCD_Rectangle(LCD_MakePoint(r->x1,r->y1), LCD_MakePoint(r->x2-1,r->y2-1),LCD_RGB(150,150,150));
-            LCD_Rectangle(LCD_MakePoint(r->x1+1,r->y1+1), LCD_MakePoint(r->x2-2,r->y2-2),LCD_RGB(150,150,150));
+            LCD_Rectangle(LCD_MakePoint(r->x1,r->y1), LCD_MakePoint(r->x2,r->y2),LCD_RGB(150,150,150));
+            LCD_Rectangle(LCD_MakePoint(r->x1+1,r->y1+1), LCD_MakePoint(r->x2-1,r->y2-1),LCD_RGB(150,150,150));
             ++r;
     }
 }
 
 void (*LastR)(void) ;
-extern int BeepIsActive;
+
 int HitTest(const struct HitRect* r, uint32_t x, uint32_t y)
 {
 
@@ -33,17 +32,16 @@ int HitTest(const struct HitRect* r, uint32_t x, uint32_t y)
             if (r->HitCallback){
                 if(LastR!=r->HitCallback) {
                     LastR=r->HitCallback;
-                    if(SWRTone==0){// SWR Sound against beep
-                        if(BeepIsOn==1){
-                            BeepIsActive=1;
-                            UB_TIMER2_Init_FRQ(880);
-                            UB_TIMER2_Start();
-                            Sleep(100);
-                            BeepIsActive=0;
-                        }
+                    if(BeepOn1==1){
+                        AUDIO1=1;
+                        UB_TIMER2_Init_FRQ(880);
+                        UB_TIMER2_Start();
+                        Sleep(50);//was100
+                        UB_TIMER2_Stop();
                     }
                 }
                 r->HitCallback();
+                while(TOUCH_IsPressed());
             }
             return 1;
         }

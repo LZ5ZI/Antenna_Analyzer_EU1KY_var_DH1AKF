@@ -919,11 +919,11 @@ void BSP_LCD_DrawRect(uint16_t Xpos, uint16_t Ypos, uint16_t Width, uint16_t Hei
 {
   /* Draw horizontal lines */
   BSP_LCD_DrawHLine(Xpos, Ypos, Width);
-  BSP_LCD_DrawHLine(Xpos, (Ypos+ Height), Width);
+  BSP_LCD_DrawHLine(Xpos, (Ypos+ Height-1), Width);
 
   /* Draw vertical lines */
   BSP_LCD_DrawVLine(Xpos, Ypos, Height);
-  BSP_LCD_DrawVLine((Xpos + Width), Ypos, Height);
+  BSP_LCD_DrawVLine((Xpos + Width-1), Ypos, Height);
 }
 
 /**
@@ -1248,13 +1248,13 @@ void BSP_LCD_FillPolygon(pPoint Points, uint16_t PointCount)
     Y2 = Points->Y;
 
     FillTriangle(X, X2, X_center, Y, Y2, Y_center);
-    FillTriangle(X, X_center, X2, Y, Y_center, Y2);
-    FillTriangle(X_center, X2, X, Y_center, Y2, Y);
+    //FillTriangle(X, X_center, X2, Y, Y_center, Y2);
+    //FillTriangle(X_center, X2, X, Y_center, Y2, Y);
   }
 
   FillTriangle(X_first, X2, X_center, Y_first, Y2, Y_center);
-  FillTriangle(X_first, X_center, X2, Y_first, Y_center, Y2);
-  FillTriangle(X_center, X2, X_first, Y_center, Y2, Y_first);
+  //FillTriangle(X_first, X_center, X2, Y_first, Y_center, Y2);
+  //FillTriangle(X_center, X2, X_first, Y_center, Y2, Y_first);
 }
 
 /**

@@ -30,9 +30,9 @@ ADC_HandleTypeDef Adc3Handle;
 //--------------------------------------------------------------
 ADC3s_t ADC3s[] = {
     // NAME   ,PORT , PIN      , Kanal       , Mittelwerte
-    //{ADC_PA0, GPIOA, GPIO_PIN_0, ADC_CHANNEL_0, MW_323}, // ADC an PA0 = ADC123_IN0
-    //{ADC_PF9, GPIOF, GPIO_PIN_9, ADC_CHANNEL_7, MW_256}, // ADC an PF7 = ADC3_IN5
-    {ADC_PF8, GPIOF, GPIO_PIN_8, ADC_CHANNEL_6, MW_256}  // ADC an PF8 = ADC3_IN6
+    {ADC_PA0, GPIOA, GPIO_PIN_0, ADC_CHANNEL_0, MW_323}, // ADC an PA0 = ADC123_IN0
+    {ADC_PF8, GPIOF, GPIO_PIN_8, ADC_CHANNEL_6, MW_256}, // ADC an PF8 = ADC3_IN6
+    {ADC_PF9, GPIOF, GPIO_PIN_9, ADC_CHANNEL_7, MW_256} // ADC an PF7 = ADC3_IN5
 };
 static int ADC3s_ANZ = sizeof(ADC3s) / sizeof(ADC3s[0]); // Anzahl der Eintraege
 
