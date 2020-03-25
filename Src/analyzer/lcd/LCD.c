@@ -96,7 +96,7 @@ void LCD_Init(void)
     // Initialize LCD
     BSP_LCD_LayerDefaultInit(0, LCD_FB_START_ADDRESS);
     //BSP_LCD_LayerDefaultInit(1, LCD_FB_START_ADDRESS+(BSP_LCD_GetXSize()*BSP_LCD_GetYSize()*4));
-    BSP_LCD_LayerDefaultInit(1, LCD_FB_START_ADDRESS+ 1024 * 1024 * 4);
+    BSP_LCD_LayerDefaultInit(1, LCD_FB_START_ADDRESS + LCD_FB_SDRAM_BANK_SIZE);
 
     // Enable LCD
     BSP_LCD_DisplayOn();

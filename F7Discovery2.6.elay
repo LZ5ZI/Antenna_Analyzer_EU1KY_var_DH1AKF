@@ -1,9 +1,24 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <EmBitz_layout_file>
 	<ActiveTarget name="Release" />
-	<File name="Src\main.c" open="1" top="1" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="Src\analyzer\lcd\LCD.c" open="1" top="0" tabpos="12" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="115" topLine="0" />
+			<Cursor1 position="14114" topLine="518" />
+		</Cursor>
+	</File>
+	<File name="Src\analyzer\window\measurement.c" open="1" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="3161" topLine="83" />
+		</Cursor>
+	</File>
+	<File name="Src\BSP\STM32746G-Discovery\stm32746g_discovery_lcd.h" open="1" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="4294" topLine="113" />
+		</Cursor>
+	</File>
+	<File name="Src\main.c" open="1" top="0" tabpos="13" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2717" topLine="84" />
 		</Cursor>
 	</File>
 </EmBitz_layout_file>

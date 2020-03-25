@@ -1463,3 +1463,355 @@
 	"usbd_storage.h"
 	"stm32746g_discovery_sd.h"
 
+1585069328 source:c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\analyzer\lcd\lcd.c
+	"LCD.h"
+	"stm32f7xx_hal.h"
+	"stm32746g_discovery.h"
+	"stm32746g_discovery_lcd.h"
+	"libnsbmp.h"
+	"crash.h"
+	<math.h>
+	"font.h"
+
+1585065288 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\analyzer\lcd\lcd.h
+	<stdint.h>
+
+1515437686 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal.h
+	"stm32f7xx_hal_conf.h"
+
+1532270431 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\inc\stm32f7xx_hal_conf.h
+	<stdint.h>
+	"system_stm32f7xx.h"
+	"stm32f7xx_hal_rcc.h"
+	"stm32f7xx_hal_gpio.h"
+	"stm32f7xx_hal_dma.h"
+	"stm32f7xx_hal_cortex.h"
+	"stm32f7xx_hal_adc.h"
+	"stm32f7xx_hal_can.h"
+	"stm32f7xx_hal_cec.h"
+	"stm32f7xx_hal_crc.h"
+	"stm32f7xx_hal_cryp.h"
+	"stm32f7xx_hal_dma2d.h"
+	"stm32f7xx_hal_dac.h"
+	"stm32f7xx_hal_dcmi.h"
+	"stm32f7xx_hal_eth.h"
+	"stm32f7xx_hal_flash.h"
+	"stm32f7xx_hal_sram.h"
+	"stm32f7xx_hal_nor.h"
+	"stm32f7xx_hal_nand.h"
+	"stm32f7xx_hal_sdram.h"
+	"stm32f7xx_hal_hash.h"
+	"stm32f7xx_hal_i2c.h"
+	"stm32f7xx_hal_i2s.h"
+	"stm32f7xx_hal_iwdg.h"
+	"stm32f7xx_hal_lptim.h"
+	"stm32f7xx_hal_ltdc.h"
+	"stm32f7xx_hal_pwr.h"
+	"stm32f7xx_hal_qspi.h"
+	"stm32f7xx_hal_rng.h"
+	"stm32f7xx_hal_rtc.h"
+	"stm32f7xx_hal_sai.h"
+	"stm32f7xx_hal_sd.h"
+	"stm32f7xx_hal_spdifrx.h"
+	"stm32f7xx_hal_spi.h"
+	"stm32f7xx_hal_tim.h"
+	"stm32f7xx_hal_uart.h"
+	"stm32f7xx_hal_usart.h"
+	"stm32f7xx_hal_irda.h"
+	"stm32f7xx_hal_smartcard.h"
+	"stm32f7xx_hal_wwdg.h"
+	"stm32f7xx_hal_pcd.h"
+	"stm32f7xx_hal_hcd.h"
+
+1515437686 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\cmsis\device\st\stm32f7xx\include\system_stm32f7xx.h
+
+1515437687 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_rcc.h
+	"stm32f7xx_hal_def.h"
+	"stm32f7xx_hal_rcc_ex.h"
+	"stm32f7xx_hal_rcc_ex.h"
+
+1515437686 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_def.h
+	"stm32f7xx.h"
+	"Legacy/stm32_hal_legacy.h"
+	<stdio.h>
+
+1585065288 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\cmsis\device\st\stm32f7xx\include\stm32f7xx.h
+	"stm32f756xx.h"
+	"stm32f746xx.h"
+	"stm32f745xx.h"
+	"stm32f765xx.h"
+	"stm32f767xx.h"
+	"stm32f769xx.h"
+	"stm32f777xx.h"
+	"stm32f779xx.h"
+	"stm32f7xx_hal_conf.h"
+
+1515437686 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\cmsis\device\st\stm32f7xx\include\stm32f746xx.h
+	"core_cm7.h"
+	"system_stm32f7xx.h"
+	<stdint.h>
+
+1515437686 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\cmsis\include\core_cm7.h
+	<stdint.h>
+	"core_cmInstr.h"
+	"core_cmFunc.h"
+	"core_cmSimd.h"
+
+1515437686 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\cmsis\include\core_cminstr.h
+	"cmsis_armcc.h"
+	"cmsis_armcc_V6.h"
+	"cmsis_gcc.h"
+	<cmsis_iar.h>
+	<cmsis_ccs.h>
+	<cmsis_csm.h>
+
+1515437686 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\cmsis\include\cmsis_gcc.h
+
+1515437686 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\cmsis\include\core_cmfunc.h
+	"cmsis_armcc.h"
+	"cmsis_armcc_V6.h"
+	"cmsis_gcc.h"
+	<cmsis_iar.h>
+	<cmsis_ccs.h>
+	<cmsis_csm.h>
+
+1515437686 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\cmsis\include\core_cmsimd.h
+	"cmsis_armcc.h"
+	"cmsis_armcc_V6.h"
+	"cmsis_gcc.h"
+	<cmsis_iar.h>
+	<cmsis_ccs.h>
+	<cmsis_csm.h>
+
+1515437687 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\legacy\stm32_hal_legacy.h
+
+1515437687 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_rcc_ex.h
+	"stm32f7xx_hal_def.h"
+
+1515437686 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_gpio.h
+	"stm32f7xx_hal_def.h"
+	"stm32f7xx_hal_gpio_ex.h"
+
+1515437686 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_gpio_ex.h
+	"stm32f7xx_hal_def.h"
+
+1515437686 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_dma.h
+	"stm32f7xx_hal_def.h"
+	"stm32f7xx_hal_dma_ex.h"
+
+1515437686 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_dma_ex.h
+	"stm32f7xx_hal_def.h"
+
+1515437686 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_cortex.h
+	"stm32f7xx_hal_def.h"
+
+1515437686 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_adc.h
+	"stm32f7xx_hal_def.h"
+	"stm32f7xx_hal_adc_ex.h"
+
+1515437686 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_adc_ex.h
+	"stm32f7xx_hal_def.h"
+
+1515437686 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_can.h
+	"stm32f7xx_hal_def.h"
+
+1515437686 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_cec.h
+	"stm32f7xx_hal_def.h"
+
+1515437686 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_crc.h
+	"stm32f7xx_hal_def.h"
+	"stm32f7xx_hal_crc_ex.h"
+
+1515437686 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_crc_ex.h
+	"stm32f7xx_hal_def.h"
+
+1515437686 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_cryp.h
+	"stm32f7xx_hal_def.h"
+	"stm32f7xx_hal_cryp_ex.h"
+
+1515437686 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_cryp_ex.h
+	"stm32f7xx_hal_def.h"
+
+1515437686 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_dma2d.h
+	"stm32f7xx_hal_def.h"
+
+1515437686 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_dac.h
+	"stm32f7xx_hal_def.h"
+	"stm32f7xx_hal_dac_ex.h"
+
+1515437686 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_dac_ex.h
+	"stm32f7xx_hal_def.h"
+
+1515437686 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_dcmi.h
+	"stm32f7xx_hal_def.h"
+
+1515437686 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_eth.h
+	"stm32f7xx_hal_def.h"
+
+1515437686 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_flash.h
+	"stm32f7xx_hal_def.h"
+	"stm32f7xx_hal_flash_ex.h"
+
+1515437686 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_flash_ex.h
+	"stm32f7xx_hal_def.h"
+
+1515437687 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_sram.h
+	"stm32f7xx_ll_fmc.h"
+
+1515437687 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_ll_fmc.h
+	"stm32f7xx_hal_def.h"
+
+1515437687 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_nor.h
+	"stm32f7xx_ll_fmc.h"
+
+1515437687 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_nand.h
+	"stm32f7xx_ll_fmc.h"
+
+1515437687 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_sdram.h
+	"stm32f7xx_ll_fmc.h"
+
+1515437686 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_hash.h
+	"stm32f7xx_hal_def.h"
+	"stm32f7xx_hal_hash_ex.h"
+
+1515437686 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_hash_ex.h
+	"stm32f7xx_hal_def.h"
+
+1515437686 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_i2c.h
+	"stm32f7xx_hal_def.h"
+	"stm32f7xx_hal_i2c_ex.h"
+
+1515437686 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_i2c_ex.h
+	"stm32f7xx_hal_def.h"
+
+1515437686 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_i2s.h
+	"stm32f7xx_hal_def.h"
+
+1515437687 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_iwdg.h
+	"stm32f7xx_hal_def.h"
+
+1515437687 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_lptim.h
+	"stm32f7xx_hal_def.h"
+
+1515437687 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_ltdc.h
+	"stm32f7xx_hal_def.h"
+	"stm32f7xx_hal_ltdc_ex.h"
+
+1515437687 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_ltdc_ex.h
+	"stm32f7xx_hal_def.h"
+	"stm32f7xx_hal_dsi.h"
+
+1515437686 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_dsi.h
+	"stm32f7xx_hal_def.h"
+
+1515437687 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_pwr.h
+	"stm32f7xx_hal_def.h"
+	"stm32f7xx_hal_pwr_ex.h"
+
+1515437687 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_pwr_ex.h
+	"stm32f7xx_hal_def.h"
+
+1515437687 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_qspi.h
+	"stm32f7xx_hal_def.h"
+
+1515437687 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_rng.h
+	"stm32f7xx_hal_def.h"
+
+1515437687 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_rtc.h
+	"stm32f7xx_hal_def.h"
+	"stm32f7xx_hal_rtc_ex.h"
+
+1515437687 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_rtc_ex.h
+	"stm32f7xx_hal_def.h"
+
+1515437687 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_sai.h
+	"stm32f7xx_hal_def.h"
+
+1515437687 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_sd.h
+	"stm32f7xx_ll_sdmmc.h"
+
+1515437687 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_ll_sdmmc.h
+	"stm32f7xx_hal_def.h"
+
+1515437687 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_spdifrx.h
+	"stm32f7xx_hal_def.h"
+
+1515437687 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_spi.h
+	"stm32f7xx_hal_def.h"
+
+1515437687 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_tim.h
+	"stm32f7xx_hal_def.h"
+	"stm32f7xx_hal_tim_ex.h"
+
+1515437687 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_tim_ex.h
+	"stm32f7xx_hal_def.h"
+
+1515437687 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_uart.h
+	"stm32f7xx_hal_def.h"
+	"stm32f7xx_hal_uart_ex.h"
+
+1515437687 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_uart_ex.h
+	"stm32f7xx_hal_def.h"
+
+1515437687 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_usart.h
+	"stm32f7xx_hal_def.h"
+	"stm32f7xx_hal_usart_ex.h"
+
+1515437687 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_usart_ex.h
+	"stm32f7xx_hal_def.h"
+
+1515437687 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_irda.h
+	"stm32f7xx_hal_def.h"
+	"stm32f7xx_hal_irda_ex.h"
+
+1515437687 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_irda_ex.h
+	"stm32f7xx_hal_def.h"
+
+1515437687 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_smartcard.h
+	"stm32f7xx_hal_def.h"
+	"stm32f7xx_hal_smartcard_ex.h"
+
+1515437687 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_smartcard_ex.h
+	"stm32f7xx_hal_def.h"
+
+1515437687 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_wwdg.h
+	"stm32f7xx_hal_def.h"
+
+1515437687 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_pcd.h
+	"stm32f7xx_ll_usb.h"
+	"stm32f7xx_hal_pcd_ex.h"
+
+1515437687 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_ll_usb.h
+	"stm32f7xx_hal_def.h"
+
+1515437687 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_pcd_ex.h
+	"stm32f7xx_hal_def.h"
+
+1515437686 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\stm32f7xx_hal_driver\inc\stm32f7xx_hal_hcd.h
+	"stm32f7xx_ll_usb.h"
+
+1515437685 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\bsp\stm32746g-discovery\stm32746g_discovery.h
+	"stm32f7xx_hal.h"
+
+1585069470 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\bsp\stm32746g-discovery\stm32746g_discovery_lcd.h
+	"../Components/rk043fn48h/rk043fn48h.h"
+	"stm32746g_discovery_sdram.h"
+	"stm32746g_discovery.h"
+
+1515437685 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\bsp\components\rk043fn48h\rk043fn48h.h
+
+1515437685 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\bsp\stm32746g-discovery\stm32746g_discovery_sdram.h
+	"stm32f7xx_hal.h"
+
+1506962800 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\analyzer\lcd\libnsbmp.h
+	<stdbool.h>
+	<stdint.h>
+	<stddef.h>
+
+1515437686 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\inc\crash.h
+	<stdio.h>
+
+1516525580 c:\users\lz5zi\antenna_analyzer_eu1ky_var_dh1akf\src\analyzer\lcd\font.h
+	<stdint.h>
+	"LCD.h"
+
