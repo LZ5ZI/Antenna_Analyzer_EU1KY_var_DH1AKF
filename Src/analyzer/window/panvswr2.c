@@ -2824,8 +2824,8 @@ float impedance, newX, oldX, MaxX, absX;
 uint32_t i, k, sel, imax;
 uint32_t fstart, freq1, dF;
 int Fq1found=0,Fq2Found=0;
-    fstart=Fs-10000;
-    dF=100;
+    fstart=Fs-1000;
+    dF=100;     //coarse scanning for Fs
     freq1 = fstart;
     DSP_Measure(freq1, 1, 1, 7);
 
@@ -2838,19 +2838,20 @@ int Fq1found=0,Fq2Found=0;
 
         //phi=DSP_MeasuredPhaseDeg();
         phi1=atan2(cimagf(rx),crealf(rx))*180.0/PI;
-
+/*
         if(phi1>-75.0&&phi1<=-60.0 && !Fq1found) //cimagf(0.0-5.0*I))
         {
             fstart=freq1-i*10;
             dF=10;
             //Sleep(1000);
-        }
-        if(phi1>-60.0 && !Fq1found) //cimagf(0.0-5.0*I))
+        }*/
+        /*
+        if(phi1>-45.0 && !Fq1found) //cimagf(0.0-5.0*I))
         {
             fstart=freq1-i;
             dF=1;
             //Sleep(1000);
-        }
+        }*/
         if(phi1>=-45.0&&!Fq1found)
         {
             Fq1=freq1;
@@ -2903,8 +2904,10 @@ int Fq1found=0,Fq2Found=0;
             break;
     }
     Sleep(10);
-    dF=10;
-    fstart=freq1;
+    dF=10;      //fine scanning for Fs
+    fstart=Fs-100;
+    Fq1found=0;
+    Fq2Found=0;
      for(i = 0; i <= 1000; i++)
     {
         Sleep(5);
@@ -2943,6 +2946,12 @@ int Fq1found=0,Fq2Found=0;
             sprintf(str, "R= %.1f X= %.1f",crealf(rx),cimagf(rx));
             FONT_Write(FONT_FRAN, TextColor, BackGrColor, 180, 200, str);
         }
+
+        if(cimagf(rx)>=0.0 && !Fq2Found ) //cimagf(0.0))
+        {
+            Fs=freq1;
+            Fq2Found=1;
+        }
         sprintf(str, "X = %.3f      ", cimagf(rx));
         FONT_Write(FONT_FRAN, TextColor, BackGrColor, 0, 140, str);
         sprintf(str, "Fs = %.3f     ", freq1/1000.0);
@@ -2962,7 +2971,7 @@ int Fq1found=0,Fq2Found=0;
 
     fstart=Fp-1000;
     //fstart=Fs+1000;
-    dF=100;
+    dF=100;          // coarse scanning for Fp
     freq1 = fstart;
     DSP_Measure(freq1, 1, 1, 1);
     int hiimpednce=0;
@@ -2976,7 +2985,7 @@ int Fq1found=0,Fq2Found=0;
         //impedance = cimagf(rx)*cimagf(rx)+crealf(rx)*crealf(rx);
         //impedance=sqrtf(impedance);
 
-        if(cimagf(rx)<=0.0&&crealf(rx)>100000.0) //cimagf(0.0))
+        if(cimagf(rx)<=0.0&&crealf(rx)>2000.0) //cimagf(0.0))
         {
             Fp=freq1;
         }
@@ -3001,9 +3010,10 @@ int Fq1found=0,Fq2Found=0;
             break;
     }
     Sleep(100);
+
     fstart=Fp-100;
     hiimpednce=0;
-    dF=10;
+    dF=1;      // fine scanning for Fp
     freq1 = fstart;
     DSP_Measure(freq1, 1, 1, 1);
     for(i = 0; i <= WWIDTH; i++)
@@ -3016,7 +3026,7 @@ int Fq1found=0,Fq2Found=0;
         //impedance = cimagf(rx)*cimagf(rx)+crealf(rx)*crealf(rx);
         //impedance=sqrtf(impedance);
 
-        if(cimagf(rx)<=0.0&&crealf(rx)>100000.0) //cimagf(0.0))
+        if(cimagf(rx)<=0.0&&crealf(rx)>2000.0) //cimagf(0.0))
         {
             Fp=freq1;
         }
